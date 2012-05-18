@@ -23,8 +23,6 @@ public class Monitor {
             }
         }
 
-        //Teste SVN do eclipse
-
         System.out.println(
                 "Press Control-C to stop.");
     }

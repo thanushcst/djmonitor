@@ -51,7 +51,7 @@ public class DiskData implements Serializable {
      */
     @Override
     public String toString() {
-        return String.valueOf(this.name + ", ")
+        return String.valueOf("'" + this.name + "'" + ", ")
                 + String.valueOf(this.readsCompleted + ", ")
                 + String.valueOf(this.readsMerged + ", ")
                 + String.valueOf(this.writesMerged + ", ")

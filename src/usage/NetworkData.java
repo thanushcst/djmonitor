@@ -42,7 +42,7 @@ public class NetworkData implements Serializable {
      */
     @Override
     public String toString() {
-        return InterfaceName + ", " + String.valueOf(this.m_receive.getRX_Bytes() + ", ")
+        return "'" + InterfaceName + "'" + ", " + String.valueOf(this.m_receive.getRX_Bytes() + ", ")
                 + String.valueOf(this.m_receive.getRX_Packets() + ", ")
                 + String.valueOf(this.m_receive.getRX_Erros() + ", ")
                 + String.valueOf(this.m_receive.getRX_Dropped() + ", ")
