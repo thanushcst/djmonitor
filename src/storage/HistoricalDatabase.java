@@ -1,4 +1,4 @@
-package manager;
+package storage;
 
 import java.sql.*;
 import java.util.Date;

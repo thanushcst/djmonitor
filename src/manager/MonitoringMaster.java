@@ -1,7 +1,6 @@
 package manager;
 
-import java.io.IOException;
-import java.sql.SQLException;
+import storage.HistoricalDatabase;
 import usage.MonitoredData;
 
 public class MonitoringMaster {
