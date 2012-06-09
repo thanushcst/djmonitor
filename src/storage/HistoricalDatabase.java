@@ -60,8 +60,7 @@ public class HistoricalDatabase {
 		}
 	}
 
-	private static final String INSERT_CPU_USAGE = "INSERT INTO CpuUsage (NODE_ID, TIME_ID, CORE_ID, USER, NICE, SYSMODE, IDLE, IOWAIT, IRQ, SOFTIRQ, STEAL, GUEST) VALUES (%s, %s, %s);";
-
+	
 	/**
 	 * Adiciona uma nova linha na tabela de recordes.
 	 * 
@@ -73,38 +72,40 @@ public class HistoricalDatabase {
 			PreparedStatement prep;
 			String timeID = this.getTimeLastRowID();
 
-			for (CpuData o : mData.getCpu()) {
-				prep = this.conn.prepareStatement(String.format(
-						INSERT_CPU_USAGE, this.nodeID, timeID, o.toString()));
-				prep.addBatch();
-				// saveOrUpdateToDatabase(String.format(INSERT_CPU_USAGE,
-				// this.nodeID, timeID, o.toString()));
-			}
-			for (DiskData o : mData.getDisk()) {
-				prep = this.conn.prepareStatement(String.format(
-						INSERT_DISK_USAGE, this.nodeID, timeID, o.toString()));
-				prep.addBatch();
-				// saveOrUpdateToDatabase(String.format(INSERT_DISK_USAGE,
-				// this.nodeID, timeID, o.toString()));
-
-			}
-			for (NetworkData o : mData.getNet()) {
-				prep = this.conn.prepareStatement(String
-						.format(INSERT_NETWORK_USAGE, this.nodeID, timeID, o
-								.toString()));
-				prep.addBatch();
-				// saveOrUpdateToDatabase(String.format(INSERT_NETWORK_USAGE,
-				// this.nodeID, timeID, o.toString()));
-
-			}
-
-			prep = this.conn.prepareStatement(String.format(
-					INSERT_MEMORY_USAGE, this.nodeID, timeID, mData.getMem()
-							.toString()));
-			// saveOrUpdateToDatabase(String.format(INSERT_MEMORY_USAGE,
-			// this.nodeID, timeID, mData.getMem().toString()));
-
 			conn.setAutoCommit(false);
+			
+			// statements prepared and executed here 
+			prep = this.conn.prepareStatement(INSERT_CPU_USAGE);
+			for (CpuData o : mData.getCpu()) {
+				prep.setObject(1, this.nodeID); 
+			    prep.setObject(2, timeID); 
+			    prep.setObject(3, o); 
+			    prep.addBatch(); 	
+			}
+			prep.addBatch();
+			
+			prep = this.conn.prepareStatement(INSERT_DISK_USAGE);
+			for (DiskData o : mData.getDisk()) {
+				prep.setObject(1, this.nodeID); 
+			    prep.setObject(2, timeID); 
+			    prep.setObject(3, o); 
+			}
+			prep.addBatch();
+			
+			prep = this.conn.prepareStatement(INSERT_NETWORK_USAGE);
+			for (NetworkData o : mData.getNet()) {
+				prep.setObject(1, this.nodeID); 
+			    prep.setObject(2, timeID); 
+			    prep.setObject(3, o);
+			}
+			prep.addBatch();
+
+			prep = this.conn.prepareStatement(INSERT_MEMORY_USAGE);
+			prep.setObject(1, this.nodeID); 
+		    prep.setObject(2, timeID); 
+		    prep.setObject(3, mData.getMem());
+		    prep.addBatch();
+		    			
 			int[] r = prep.executeBatch();
 			conn.commit();
 			conn.setAutoCommit(true);
@@ -205,19 +206,19 @@ public class HistoricalDatabase {
 	/**
 	 * Insert into CPU table
 	 */
-
+	private static final String INSERT_CPU_USAGE = "INSERT INTO CpuUsage (NODE_ID, TIME_ID, CORE_ID, USER, NICE, SYSMODE, IDLE, IOWAIT, IRQ, SOFTIRQ, STEAL, GUEST) VALUES (?, ?, ?);";
 	/**
 	 * Insert into Memory table
 	 */
-	private static final String INSERT_MEMORY_USAGE = "INSERT INTO MemoryUsage (NODE_ID, TIME_ID, SIZE, RESIDENT, SHARE, TEXT, DATA, VIRTUALSIZE, RSS, RSSLIM, MEM_TOTAL, MEM_USED, MEM_FREE, MEM_BUFFERS, MEM_CACHED) VALUES (%s, %s, %s);";
+	private static final String INSERT_MEMORY_USAGE = "INSERT INTO MemoryUsage (NODE_ID, TIME_ID, SIZE, RESIDENT, SHARE, TEXT, DATA, VIRTUALSIZE, RSS, RSSLIM, MEM_TOTAL, MEM_USED, MEM_FREE, MEM_BUFFERS, MEM_CACHED) VALUES (?, ?, ?);";
 	/**
 	 * Insert into Network table
 	 */
-	private static final String INSERT_NETWORK_USAGE = "INSERT INTO NetworkUsage (NODE_ID, TIME_ID, INTERFACE, R_BYTES, R_PACKETS, R_ERRORS, R_DROP, R_FIFO, R_FRAME, R_COMPRESSED, R_MULTICAST, T_BYTES, T_PACKETS, T_ERRORS, T_DROP, T_FIFO, T_COLLS, T_CARRIER, T_COMPRESSED) VALUES (%s, %s, %s);";
+	private static final String INSERT_NETWORK_USAGE = "INSERT INTO NetworkUsage (NODE_ID, TIME_ID, INTERFACE, R_BYTES, R_PACKETS, R_ERRORS, R_DROP, R_FIFO, R_FRAME, R_COMPRESSED, R_MULTICAST, T_BYTES, T_PACKETS, T_ERRORS, T_DROP, T_FIFO, T_COLLS, T_CARRIER, T_COMPRESSED) VALUES (?, ?, ?);";
 	/**
 	 * Insert into Disk table
 	 */
-	private static final String INSERT_DISK_USAGE = "INSERT INTO DiskUsage (NODE_ID, TIME_ID, PARTITION_NAME, READS_COMPLETED, READS_MERGED, WRITES_MERGED, SECTORS_READ, MILLISECONDS_READING, WRITES_COMPLETED, SECTORS_WRITTEN, MILLISECONDS_WRITING, IO_IN_PROGRESS, MILLISECONDS_SPENT_IN_IO, WEIGHTED_MILLISECONDS_DOING_IO) VALUES (%s, %s, %s);";
+	private static final String INSERT_DISK_USAGE = "INSERT INTO DiskUsage (NODE_ID, TIME_ID, PARTITION_NAME, READS_COMPLETED, READS_MERGED, WRITES_MERGED, SECTORS_READ, MILLISECONDS_READING, WRITES_COMPLETED, SECTORS_WRITTEN, MILLISECONDS_WRITING, IO_IN_PROGRESS, MILLISECONDS_SPENT_IN_IO, WEIGHTED_MILLISECONDS_DOING_IO) VALUES (?, ?, ?);";
 	/**
 	 * Create table
 	 */
