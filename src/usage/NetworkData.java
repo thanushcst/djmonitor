@@ -8,7 +8,12 @@ import java.io.Serializable;
  */
 public class NetworkData implements Serializable {
 
-    public NetworkData(String interfaceName,
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4583951425149974664L;
+
+	public NetworkData(String interfaceName,
             long rXBytes,
             int rXPackets,
             int rXErros,

@@ -9,6 +9,11 @@ import java.io.Serializable;
 public class DiskData implements Serializable {
 
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 5394909818404147396L;
+
+	/**
      * @param major
      * @param minor
      * @param name

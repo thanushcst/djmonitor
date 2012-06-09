@@ -4,6 +4,10 @@ import java.io.Serializable;
 
 public class Transmit implements Serializable{
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8281747016988077029L;
+	/**
 	 * Transmited
 	 */
 	private long TX_Bytes;

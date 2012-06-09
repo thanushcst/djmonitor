@@ -4,6 +4,10 @@ import java.io.Serializable;
 
 public class Receive implements Serializable{
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -867141219197414115L;
+	/**
 	 * Received
 	 */
 	private long RX_Bytes;

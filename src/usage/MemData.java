@@ -8,7 +8,12 @@ import java.io.Serializable;
  */
 public class MemData implements Serializable {
 
-    public MemData(
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 8926305540190678396L;
+
+	public MemData(
             int size,
             int resident,
             int share,
