@@ -63,9 +63,6 @@ public class HistoricalDatabase {
 	
 	/**
 	 * Adiciona uma nova linha na tabela de recordes.
-	 * 
-	 * @param insert
-	 *            : the insert statement
 	 */
 	public boolean saveOrUpdate(MonitoredData mData) {
 		try {
@@ -117,23 +114,6 @@ public class HistoricalDatabase {
 					Level.SEVERE, null, ex);
 		}
 		return false;
-	}
-
-	/**
-	 * Adiciona uma conjunto de linhas na tabela..
-	 * 
-	 * @param insert
-	 *            : the insert statement
-	 */
-	private void saveOrUpdateToDatabase(PreparedStatement prep) {
-		try {
-			conn.setAutoCommit(false);
-			int[] r = prep.executeBatch();
-			conn.setAutoCommit(true);
-		} catch (SQLException ex) {
-			Logger.getLogger(HistoricalDatabase.class.getName()).log(
-					Level.SEVERE, null, ex);
-		}
 	}
 
 	/**
