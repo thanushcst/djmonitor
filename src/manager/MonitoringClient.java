@@ -34,7 +34,6 @@ public class MonitoringClient {
     synchronized void put(MonitoredData data) {
         if (valueSet) {
             try {
-
                 wait();
             } catch (InterruptedException e) {
                 System.out.println("InterruptedException caught");
