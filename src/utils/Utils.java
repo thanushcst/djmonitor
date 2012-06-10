@@ -1,6 +1,8 @@
 package utils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.*;
 import java.util.Enumeration;
 import java.util.logging.Level;
@@ -93,5 +95,21 @@ public class Utils {
 					(i < mac.length - 1) ? "-" : ""));
 		}
 		return sb.toString().hashCode();
+	}
+	public static int getMacAddress2(){
+		Process p;
+		try {
+			p = Runtime.getRuntime().exec("getmac /fo csv /nh");
+			BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			String line = in.readLine().split(",")[0].replace('"',' ');
+			return line.hashCode();
+			
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return -1;
+		
 	}
 }

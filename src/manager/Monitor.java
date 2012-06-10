@@ -10,6 +10,9 @@ public class Monitor {
 
 	public static void main(String[] args) throws IOException {
 
+		int mac = utils.Utils.getMacAddress();
+		int mac2 = utils.Utils.getMacAddress2();
+		
 		if (args.length < 1) {
 			System.out.println("Utilizar:");
 			System.out.println("monitor -m, para rodar MonitoringMaster");
