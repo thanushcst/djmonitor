@@ -66,50 +66,50 @@ public class Utils {
 	 * @return The hashCode of the MAC address object; -1 if something goes
 	 *         wrong.
 	 */
-	public static int getMacAddress(){
+	public static String getMacAddress() {
 		InetAddress ip = null;
 		try {
+
 			ip = InetAddress.getLocalHost();
+			ip.getHostAddress();
+			NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+
+			if (network != null) {
+				byte[] mac = network.getHardwareAddress();
+				return macToString(mac);
+			} else {
+				return getMacAddress2();
+			}
 		} catch (UnknownHostException e2) {
 			Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, e2);
-		}
-		ip.getHostAddress();
-
-		NetworkInterface network = null;
-		try {
-			network = NetworkInterface.getByInetAddress(ip);
-		} catch (SocketException e1) {
-			Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, e1);
-		}
-
-		byte[] mac = null;
-		try {
-			mac = network.getHardwareAddress();
 		} catch (SocketException e) {
 			Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, e);
 		}
+		return null;
+	}
 
+	private static String macToString(byte[] mac) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < mac.length; i++) {
 			sb.append(String.format("%02X%s", mac[i],
 					(i < mac.length - 1) ? "-" : ""));
 		}
-		return sb.toString().hashCode();
+		return sb.toString();
 	}
-	public static int getMacAddress2(){
+
+	public static String getMacAddress2() {
 		Process p;
 		try {
 			p = Runtime.getRuntime().exec("getmac /fo csv /nh");
-			BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-			String line = in.readLine().split(",")[0].replace('"',' ');
-			return line.hashCode();
-			
-			
+			BufferedReader in = new BufferedReader(new InputStreamReader(
+					p.getInputStream()));
+			String line = in.readLine().split(",")[0].replace('"', ' ');
+			return line;
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, e);
 		}
-		return -1;
-		
+		return null;
+
 	}
 }
