@@ -69,7 +69,6 @@ public class Utils {
 	public static String getMacAddress() {
 		InetAddress ip = null;
 		try {
-
 			ip = InetAddress.getLocalHost();
 			ip.getHostAddress();
 			NetworkInterface network = NetworkInterface.getByInetAddress(ip);
@@ -89,12 +88,7 @@ public class Utils {
 	}
 
 	private static String macToString(byte[] mac) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < mac.length; i++) {
-			sb.append(String.format("%02X%s", mac[i],
-					(i < mac.length - 1) ? "-" : ""));
-		}
-		return sb.toString();
+		return mac.toString();
 	}
 
 	public static String getMacAddress2() {
