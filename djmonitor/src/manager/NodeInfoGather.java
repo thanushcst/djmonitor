@@ -19,12 +19,12 @@ public enum NodeInfoGather {
     /**
      * Collect process system information from /proc file system.
      */
-    public synchronized MonitoredData getSystemUsage(int iteracao) {
+    public synchronized MonitoredData getSystemUsage() {
         MonitoredData mData = null;
 
         ProcParser pp = new ProcParser(Utils.getPid());
 
-        mData = new MonitoredData(iteracao,
+        mData = new MonitoredData(Utils.getIPAddress(),
                 fillCpuData(pp.gatherUsage(UsageType.CPU)),
                 fillMemData(pp.gatherUsage(UsageType.MEMORY)),
                 fillDiskData(pp.gatherUsage(UsageType.DISK)),

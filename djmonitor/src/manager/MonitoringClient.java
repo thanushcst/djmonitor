@@ -1,5 +1,6 @@
 package manager;
 
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import usage.CpuData;
@@ -9,10 +10,9 @@ import usage.NetworkData;
 
 public class MonitoringClient {
 
-	public MonitoringClient(long _gatherInterval, String _masterIpAddr,
-			int _iteracao) {
-		new Gather(this, _gatherInterval, _iteracao);
-		new Sender(this, _masterIpAddr);
+	public MonitoringClient(long _gatherInterval, String _masterIpAddr, TCPEchoClient _sender) {
+		new Gather(this, _gatherInterval);
+		new Sender(this, _masterIpAddr, _sender);
 	}
 
 	MonitoredData mData;
@@ -51,12 +51,10 @@ class Gather implements Runnable {
 
 	MonitoringClient client;
 	long gatherInterval = 0;
-	int iteracao = 0;
 
-	Gather(MonitoringClient client, long _gatherInterval, int _iteracao) {
+	Gather(MonitoringClient client, long _gatherInterval) {
 		this.client = client;
 		this.gatherInterval = _gatherInterval;
-		this.iteracao = _iteracao;
 		new Thread(this, "Gather").start();
 	}
 
@@ -70,7 +68,7 @@ class Gather implements Runnable {
 				Logger.getLogger(MonitoringClient.class.getName()).log(
 						Level.SEVERE, null, ex);
 			}
-			tempData = NodeInfoGather.INSTANCE.getSystemUsage(this.iteracao);
+			tempData = NodeInfoGather.INSTANCE.getSystemUsage();
 			System.out
 					.println("Finished gathering data from procfs. Ready to send it.");
 			client.put(tempData);
@@ -82,10 +80,12 @@ class Sender implements Runnable {
 
 	String masterIpAddr;
 	MonitoringClient client;
+	TCPEchoClient sender;
 
-	Sender(MonitoringClient client, String _masterIpAddr) {
+	Sender(MonitoringClient client, String _masterIpAddr, TCPEchoClient _sender) {
 		this.client = client;
 		this.masterIpAddr = _masterIpAddr;
+		this.sender = _sender;
 		new Thread(this, "Sender").start();
 	}
 
@@ -113,7 +113,13 @@ class Sender implements Runnable {
 
 			System.out.println("Got data already gathered. Sending...");
 			// send to the master
-			NodeInfoCommunicator.INSTANCE.SendTCP(tempData, this.masterIpAddr);
+			//NodeInfoCommunicator.INSTANCE.SendTCP(tempData, this.masterIpAddr);
+			try {
+				sender.TCPEchoClientSend("Bla!");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 }
