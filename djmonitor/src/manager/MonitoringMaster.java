@@ -1,84 +1,62 @@
 package manager;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import parser.ProcParser;
 import storage.HistoricalDatabase;
 import usage.MonitoredData;
 
-public class MonitoringMaster {
+public class MonitoringMaster implements Runnable {
 
-	public MonitoringMaster() {
-		new Receiver(this);
-		new Saver(this);
+	// Socket connect to client
+	private Socket clientSock;
+	// Server logger
+	private Logger logger;
+	// Historical database to save the monitored data.
+	HistoricalDatabase hdb;
+	// Get the input and output I/O streams from socket
+	ObjectInputStream ois;
+
+	public MonitoringMaster(Socket clntSock, HistoricalDatabase _hdb) {
+		this.clientSock = clntSock;
+		this.hdb = _hdb;
+		
+		try {
+			ois = new ObjectInputStream(this.clientSock.getInputStream());
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Exception in echo protocol", e);
+		}
 	}
 
-	MonitoredData mData;
-	boolean valueSet = false;
+	public void handleEchoClient(Socket client, Logger logger) {
+		try {
+			MonitoredData mdata;
+			// Receive until client closes connection, indicated by -1;
+			while ((mdata = (MonitoredData) ois.readObject()) != null) {
+				System.out.println("Got received data. Ready to save.");
+				this.hdb.saveOrUpdate(mdata);
+				System.out.println("Monitored Data arrived at home from node: " + String.valueOf(mdata.getNodeID()));
+			}
 
-	synchronized MonitoredData get() {
-		if (!valueSet) {
+		} catch (IOException ex) {
+			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (ClassNotFoundException ex) {
+			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE, null, ex);
+		} finally {
 			try {
-				wait();
-			} catch (InterruptedException e) {
-				System.out.println("InterruptedException caught");
+				client.close();
+			} catch (IOException e) {
 			}
 		}
-		System.out.println("Got received data. Ready to save.");
-		valueSet = false;
-		notify();
-		return this.mData;
-	}
-
-	synchronized void put(MonitoredData data) {
-		if (valueSet) {
-			try {
-				wait();
-			} catch (InterruptedException e) {
-				System.out.println("InterruptedException caught");
-			}
-		}
-		this.mData = data;
-		valueSet = true;
-		System.out.println("Received data. Ready to put it into DB.");
-		notify();
-	}
-}
-
-class Receiver implements Runnable {
-
-	MonitoringMaster master;
-
-	Receiver(MonitoringMaster m) {
-		this.master = m;
-		new Thread(this, "Receiver").start();
 	}
 
 	@Override
 	public void run() {
-		MonitoredData tempData;
-		while (true) {
-			System.out.println("Waiting for connection...");
-			tempData = NodeInfoCommunicator.INSTANCE.ReceiveTCP();
-			master.put(tempData);
-		}
-	}
-}
-
-class Saver implements Runnable {
-
-	MonitoringMaster master;
-	HistoricalDatabase hdb = new HistoricalDatabase("historical.db");
-
-	Saver(MonitoringMaster m) {
-		this.master = m;
-		new Thread(this, "Saver").start();
+		handleEchoClient(clientSock, logger);
 	}
 
-	@Override
-	public void run() {
-		MonitoredData tempData;
-		while (true) {
-			tempData = master.get();
-			System.out.println("Monitored Data arrived at home...");
-			hdb.saveOrUpdate(tempData);
-		}
-	}
 }

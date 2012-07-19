@@ -1,18 +1,23 @@
 package manager;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import usage.CpuData;
 import usage.DiskData;
 import usage.MonitoredData;
 import usage.NetworkData;
+import utils.Utils;
 
 public class MonitoringClient {
 
-	public MonitoringClient(long _gatherInterval, String _masterIpAddr, TCPEchoClient _sender) {
+	public MonitoringClient(long _gatherInterval, String _servAddress,
+			int _servPort) {
 		new Gather(this, _gatherInterval);
-		new Sender(this, _masterIpAddr, _sender);
+		new Sender(this, _servAddress, _servPort);
 	}
 
 	MonitoredData mData;
@@ -77,15 +82,48 @@ class Gather implements Runnable {
 }
 
 class Sender implements Runnable {
+	// Server name or IP address
+	String server;
+	// Convert argument String to bytes using the default character encoding
+	byte[] data;
+	// Port to connect to the server
+	int servPort = 0;
+	// Create socket that is connected to server on specified port
+	Socket socket;
+	// Count the number of packages sent
+	int packageCount = 0;
 
-	String masterIpAddr;
+	ObjectOutputStream oos;
 	MonitoringClient client;
-	TCPEchoClient sender;
 
-	Sender(MonitoringClient client, String _masterIpAddr, TCPEchoClient _sender) {
-		this.client = client;
-		this.masterIpAddr = _masterIpAddr;
-		this.sender = _sender;
+	Sender(MonitoringClient _client, String _server, int _servPort) {
+		// check for parameters
+		if (_client == null)
+			throw new IllegalArgumentException(
+					"Parameter: <Client object> null.");
+		if (!Utils.stringNotEmpty(_server))
+			throw new IllegalArgumentException(
+					"Parameter: <Server Address> empty.");
+		if (_servPort <= 0)
+			throw new IllegalArgumentException(
+					"Parameter: <Server Port> empty.");
+
+		this.client = _client;
+		this.server = _server;
+		this.servPort = _servPort;
+
+		try {
+			socket = new Socket(server, servPort);
+			oos = new ObjectOutputStream(socket.getOutputStream());
+			System.out.println("Connected to server...");
+		} catch (UnknownHostException e) {
+			Logger.getLogger(MonitoringClient.class.getName()).log(
+					Level.SEVERE, null, e);
+		} catch (IOException e) {
+			Logger.getLogger(MonitoringClient.class.getName()).log(
+					Level.SEVERE, null, e);
+		}
+
 		new Thread(this, "Sender").start();
 	}
 
@@ -94,32 +132,52 @@ class Sender implements Runnable {
 		MonitoredData tempData;
 
 		while (true) {
-			tempData = client.get();
+			if ((tempData = client.get()) == null)
+				throw new IllegalArgumentException(
+						"Parameter: <Monitored Data> empty.");
 
-			for (CpuData o : tempData.getCpu()) {
-				System.out.print("CPU:");
-				System.out.println(o.toString());
-			}
-			for (DiskData o : tempData.getDisk()) {
-				System.out.print("DISK:");
-				System.out.println(o.toString());
-			}
-			for (NetworkData o : tempData.getNet()) {
-				System.out.print("NETWORK:");
-				System.out.println(o.toString());
-			}
-			System.out.print("MEMORY:");
-			System.out.println(tempData.getMem().toString());
-
-			System.out.println("Got data already gathered. Sending...");
-			// send to the master
-			//NodeInfoCommunicator.INSTANCE.SendTCP(tempData, this.masterIpAddr);
+			// printMonitoredData(tempData);
+			System.out.println("Data gathered. Sending...");
 			try {
-				sender.TCPEchoClientSend(tempData);
+				oos.reset();
+				oos.writeUnshared(tempData);
+				oos.flush();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Logger.getLogger(MonitoringClient.class.getName()).log(
+						Level.SEVERE, null, e);
 			}
+			this.packageCount++;
+			System.out.println("Client sent the monitored data package: "
+					+ String.valueOf(this.packageCount));
 		}
+	}
+
+	/**
+	 * @param tempData
+	 */
+	private void printMonitoredData(MonitoredData tempData) {
+		for (CpuData o : tempData.getCpu()) {
+			System.out.print("CPU:");
+			System.out.println(o.toString());
+		}
+		for (DiskData o : tempData.getDisk()) {
+			System.out.print("DISK:");
+			System.out.println(o.toString());
+		}
+		for (NetworkData o : tempData.getNet()) {
+			System.out.print("NETWORK:");
+			System.out.println(o.toString());
+		}
+		System.out.print("MEMORY:");
+		System.out.println(tempData.getMem().toString());
+	}
+
+	protected void finalize() throws Throwable {
+		// do finalization here
+		// Close the socket and its streams
+		socket.close();
+		oos.close();
+
+		super.finalize();
 	}
 }
