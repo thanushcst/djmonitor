@@ -24,7 +24,8 @@ public enum NodeInfoGather {
 
         ProcParser pp = new ProcParser(Utils.getPid());
 
-        mData = new MonitoredData(Utils.getIPAddress(),
+        System.out.println("IP Address of the client: " + Utils.getIPAddressToString());
+        mData = new MonitoredData(Math.abs(Utils.getIPAddressToString().hashCode()),
                 fillCpuData(pp.gatherUsage(UsageType.CPU)),
                 fillMemData(pp.gatherUsage(UsageType.MEMORY)),
                 fillDiskData(pp.gatherUsage(UsageType.DISK)),
