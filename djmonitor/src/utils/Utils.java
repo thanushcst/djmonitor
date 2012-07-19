@@ -43,7 +43,6 @@ public class Utils {
             Integer.parseInt(value);
             return true;
         } catch (NumberFormatException ex) {
-            Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
     }

@@ -115,7 +115,7 @@ class Sender implements Runnable {
 			// send to the master
 			//NodeInfoCommunicator.INSTANCE.SendTCP(tempData, this.masterIpAddr);
 			try {
-				sender.TCPEchoClientSend("Bla!");
+				sender.TCPEchoClientSend(tempData);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

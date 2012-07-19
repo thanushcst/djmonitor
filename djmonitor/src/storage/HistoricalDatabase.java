@@ -63,7 +63,7 @@ public class HistoricalDatabase {
 	/**
 	 * Adiciona uma nova linha na tabela de recordes.
 	 */
-	public boolean saveOrUpdate(MonitoredData mData) {
+	public boolean saveOrUpdate(MonitoredData  mData) {
 		String timeID = this.getTimeLastRowID();
 
 		// statements prepared and executed here

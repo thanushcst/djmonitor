@@ -49,11 +49,9 @@ public class Monitor {
 					System.out.println("Waiting for connections...");
 					// Block waiting for connection
 					Socket clntSock = servSock.accept();
-					Thread thread = new Thread(new EchoProtocol(clntSock,
-							logger));
+					Thread thread = new Thread(new EchoProtocol(clntSock, logger));
 					thread.start();
-					logger.info("Created and started Thread "
-							+ thread.getName());
+					logger.info("Created and started Thread " + thread.getName());
 				}
 				/* NOT REACHED */
 
@@ -70,8 +68,7 @@ public class Monitor {
 				else
 					echoServerPort = Integer.valueOf(args[2]);
 
-				TCPEchoClient ec = new TCPEchoClient(serverAddress,
-						echoServerPort);
+				TCPEchoClient ec = new TCPEchoClient(serverAddress, echoServerPort);
 				MonitoringClient mc = new MonitoringClient(1000, args[1], ec);
 			}
 

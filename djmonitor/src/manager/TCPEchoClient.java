@@ -2,12 +2,15 @@ package manager;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import usage.MonitoredData;
 import utils.Utils;
 
 public class TCPEchoClient {
@@ -19,6 +22,8 @@ public class TCPEchoClient {
 	int servPort = 0;
 	// Create socket that is connected to server on specified port
 	Socket socket;
+	
+	ObjectOutputStream oos;
 
 	public TCPEchoClient(String _server, int _servPort) {
 
@@ -30,12 +35,12 @@ public class TCPEchoClient {
 					"Parameter: <Server Port> empty.");
 
 		this.server = _server;
-
 		this.servPort = _servPort;
 
 		try {
 			socket = new Socket(server, servPort);
-			System.out.println("Connected to server... sending echo string");
+			oos = new ObjectOutputStream(socket.getOutputStream());
+			System.out.println("Connected to server...");
 		} catch (UnknownHostException e) {
 			Logger.getLogger(MonitoringClient.class.getName()).log(
 					Level.SEVERE, null, e);
@@ -45,18 +50,20 @@ public class TCPEchoClient {
 		}
 	}
 
-	public void TCPEchoClientSend(String _data) throws IOException {
-		if (!Utils.stringNotEmpty(_data))
-			throw new IllegalArgumentException("Parameter: <Data> empty.");
+	public void TCPEchoClientSend(MonitoredData _mData) throws IOException {
+		if (_mData == null)
+			throw new IllegalArgumentException("Parameter: <Monitored Data> empty.");
 
-		this.data = _data.getBytes();
-		InputStream in = socket.getInputStream();
-		OutputStream out = socket.getOutputStream();
-
-		// Send the encoded string to the server
-		out.write(this.data);
-
-		System.out.println("Received: " + new String(data));
+		// Cria um canal para enviar dados
+		//ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+		//ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+	
+		oos.reset();
+		// Send the encoded object to the server
+		//oos.writeObject(_mData);
+		oos.writeUnshared(_mData);
+		
+		System.out.println("Client sent the monitored data package.");
 
 	}
 
