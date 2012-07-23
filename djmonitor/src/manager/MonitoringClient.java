@@ -12,10 +12,11 @@ import usage.MonitoredData;
 import usage.NetworkData;
 import utils.Utils;
 
-public class MonitoringClient {
+public class MonitoringClient
+{
 
-	public MonitoringClient(long _gatherInterval, String _servAddress,
-			int _servPort) {
+	public MonitoringClient(long _gatherInterval, String _servAddress, int _servPort)
+	{
 		new Gather(this, _gatherInterval);
 		new Sender(this, _servAddress, _servPort);
 	}
@@ -23,11 +24,15 @@ public class MonitoringClient {
 	MonitoredData mData;
 	boolean valueSet = false;
 
-	synchronized MonitoredData get() {
-		if (!valueSet) {
-			try {
+	synchronized MonitoredData get()
+	{
+		if (!valueSet)
+		{
+			try
+			{
 				wait();
-			} catch (InterruptedException e) {
+			} catch (InterruptedException e)
+			{
 				System.out.println("InterruptedException caught");
 			}
 		}
@@ -37,11 +42,15 @@ public class MonitoringClient {
 		return this.mData;
 	}
 
-	synchronized void put(MonitoredData data) {
-		if (valueSet) {
-			try {
+	synchronized void put(MonitoredData data)
+	{
+		if (valueSet)
+		{
+			try
+			{
 				wait();
-			} catch (InterruptedException e) {
+			} catch (InterruptedException e)
+			{
 				System.out.println("InterruptedException caught");
 			}
 		}
@@ -52,36 +61,43 @@ public class MonitoringClient {
 	}
 }
 
-class Gather implements Runnable {
+class Gather implements Runnable
+{
 
 	MonitoringClient client;
 	long gatherInterval = 0;
+	int uuid = 0;
 
-	Gather(MonitoringClient client, long _gatherInterval) {
+	Gather(MonitoringClient client, long _gatherInterval)
+	{
 		this.client = client;
 		this.gatherInterval = _gatherInterval;
+		this.uuid = Utils.getNodeUUID();
 		new Thread(this, "Gather").start();
 	}
 
 	@Override
-	public void run() {
+	public void run()
+	{
 		MonitoredData tempData;
-		while (true) {
-			try {
+		while (true)
+		{
+			try
+			{
 				Thread.sleep(this.gatherInterval);
-			} catch (InterruptedException ex) {
-				Logger.getLogger(MonitoringClient.class.getName()).log(
-						Level.SEVERE, null, ex);
+			} catch (InterruptedException ex)
+			{
+				Logger.getLogger(MonitoringClient.class.getName()).log(Level.SEVERE, null, ex);
 			}
-			tempData = NodeInfoGather.INSTANCE.getSystemUsage();
-			System.out
-					.println("Finished gathering data from procfs. Ready to send it.");
+			tempData = NodeInfoGather.INSTANCE.getSystemUsage(this.uuid);
+			System.out.println("Finished gathering data from procfs. Ready to send it.");
 			client.put(tempData);
 		}
 	}
 }
 
-class Sender implements Runnable {
+class Sender implements Runnable
+{
 	// Server name or IP address
 	String server;
 	// Convert argument String to bytes using the default character encoding
@@ -96,75 +112,80 @@ class Sender implements Runnable {
 	ObjectOutputStream oos;
 	MonitoringClient client;
 
-	Sender(MonitoringClient _client, String _server, int _servPort) {
+	Sender(MonitoringClient _client, String _server, int _servPort)
+	{
 		// check for parameters
 		if (_client == null)
-			throw new IllegalArgumentException(
-					"Parameter: <Client object> null.");
+			throw new IllegalArgumentException("Parameter: <Client object> null.");
 		if (!Utils.stringNotEmpty(_server))
-			throw new IllegalArgumentException(
-					"Parameter: <Server Address> empty.");
+			throw new IllegalArgumentException("Parameter: <Server Address> empty.");
 		if (_servPort <= 0)
-			throw new IllegalArgumentException(
-					"Parameter: <Server Port> empty.");
+			throw new IllegalArgumentException("Parameter: <Server Port> empty.");
 
 		this.client = _client;
 		this.server = _server;
 		this.servPort = _servPort;
 
-		try {
+		try
+		{
 			socket = new Socket(server, servPort);
 			oos = new ObjectOutputStream(socket.getOutputStream());
 			System.out.println("Connected to server...");
-		} catch (UnknownHostException e) {
-			Logger.getLogger(MonitoringClient.class.getName()).log(
-					Level.SEVERE, null, e);
-		} catch (IOException e) {
-			Logger.getLogger(MonitoringClient.class.getName()).log(
-					Level.SEVERE, null, e);
+		} catch (UnknownHostException e)
+		{
+			Logger.getLogger(MonitoringClient.class.getName()).log(Level.SEVERE, null, e);
+		} catch (IOException e)
+		{
+			Logger.getLogger(MonitoringClient.class.getName()).log(Level.SEVERE, null, e);
 		}
 
 		new Thread(this, "Sender").start();
 	}
 
 	@Override
-	public void run() {
+	public void run()
+	{
 		MonitoredData tempData;
 
-		while (true) {
+		while (true)
+		{
 			if ((tempData = client.get()) == null)
-				throw new IllegalArgumentException(
-						"Parameter: <Monitored Data> empty.");
+				throw new IllegalArgumentException("Parameter: <Monitored Data> empty.");
 
 			// printMonitoredData(tempData);
 			System.out.println("Data gathered. Sending...");
-			try {
+			try
+			{
 				oos.reset();
 				oos.writeUnshared(tempData);
 				oos.flush();
-			} catch (IOException e) {
-				Logger.getLogger(MonitoringClient.class.getName()).log(
-						Level.SEVERE, null, e);
+			} catch (IOException e)
+			{
+				Logger.getLogger(MonitoringClient.class.getName()).log(Level.SEVERE, null, e);
 			}
 			this.packageCount++;
-			System.out.println("Client sent the monitored data package: "
-					+ String.valueOf(this.packageCount));
+			System.out.println("Client sent the monitored data package: " + String.valueOf(this.packageCount));
 		}
 	}
 
 	/**
 	 * @param tempData
 	 */
-	private void printMonitoredData(MonitoredData tempData) {
-		for (CpuData o : tempData.getCpu()) {
+	@SuppressWarnings("unused")
+	private void printMonitoredData(MonitoredData tempData)
+	{
+		for (CpuData o : tempData.getCpu())
+		{
 			System.out.print("CPU:");
 			System.out.println(o.toString());
 		}
-		for (DiskData o : tempData.getDisk()) {
+		for (DiskData o : tempData.getDisk())
+		{
 			System.out.print("DISK:");
 			System.out.println(o.toString());
 		}
-		for (NetworkData o : tempData.getNet()) {
+		for (NetworkData o : tempData.getNet())
+		{
 			System.out.print("NETWORK:");
 			System.out.println(o.toString());
 		}
@@ -172,7 +193,8 @@ class Sender implements Runnable {
 		System.out.println(tempData.getMem().toString());
 	}
 
-	protected void finalize() throws Throwable {
+	protected void finalize() throws Throwable
+	{
 		// do finalization here
 		// Close the socket and its streams
 		socket.close();

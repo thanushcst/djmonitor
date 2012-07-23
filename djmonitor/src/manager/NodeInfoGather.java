@@ -18,14 +18,16 @@ public enum NodeInfoGather {
 
     /**
      * Collect process system information from /proc file system.
+     * @param: uuid: universally unique identifier of the node in the cluster.
+     *  
      */
-    public synchronized MonitoredData getSystemUsage() {
+    public synchronized MonitoredData getSystemUsage(int _uuid) {
         MonitoredData mData = null;
 
         ProcParser pp = new ProcParser(Utils.getPid());
 
-        System.out.println("IP Address of the client: " + Utils.getIPAddressToString());
-        mData = new MonitoredData(Math.abs(Utils.getIPAddressToString().hashCode()),
+        System.out.println("IP Address of the client: " + String.valueOf(_uuid));
+        mData = new MonitoredData(_uuid,
                 fillCpuData(pp.gatherUsage(UsageType.CPU)),
                 fillMemData(pp.gatherUsage(UsageType.MEMORY)),
                 fillDiskData(pp.gatherUsage(UsageType.DISK)),
