@@ -2,6 +2,7 @@ package utils;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,6 +51,19 @@ public enum Utils
 		{
 			return false;
 		}
+	}
+
+	/**
+	 * Remove Null Value from String array
+	 */
+	public static String[] removeEmptyStringsFromArray(String[] in)
+	{
+		ArrayList<String> list = new ArrayList<String>();
+		for (String s : in)
+			if (!s.equals(""))
+				list.add(s);
+
+		return list.toArray(new String[list.size()]);
 	}
 
 	/**

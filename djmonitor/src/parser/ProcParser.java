@@ -22,30 +22,30 @@ public class ProcParser
 	/*
 	 * The pid of the process
 	 */
-	private int					processPid		= -1;
+	private int processPid = -1;
 	/*
 	 * The line which the number of cpu cores is located in /proc/cpuinfo in
 	 * kernel 2.6.32-34-generic.
 	 */
-	public static final int		cpucoresline	= 12;
+	public static final int cpucoresline = 12;
 
 	/*
 	 * Constant access path string. Those with 'pid' before are in /proc/[pid]/;
 	 * Those with 'net' are in /proc/net/. Those without are directly in /proc/.
 	 */
-	public static final String	pidStatmPath	= "/proc/#/statm";
-	public static final String	pidStatPath		= "/proc/#/stat";
-	public static final String	statPath		= "/proc/stat";
-	public static final String	cpuinfoPath		= "/proc/cpuinfo";
-	public static final String	meminfoPath		= "/proc/meminfo";
-	public static final String	netdevPath		= "/proc/net/dev";
-	public static final String	partitionsPath	= "/proc/partitions";
-	public static final String	diskstatsPath	= "/proc/diskstats";
-	public static final String	EMPTY			= "";
-	public static final String	COLON			= ":";
-	public static final String	SPACE			= " ";
-	public static final String	SHARP			= "#";
-	public static final String	LINE_SEPARATOR	= "line.separator";
+	public static final String pidStatmPath = "/proc/#/statm";
+	public static final String pidStatPath = "/proc/#/stat";
+	public static final String statPath = "/proc/stat";
+	public static final String cpuinfoPath = "/proc/cpuinfo";
+	public static final String meminfoPath = "/proc/meminfo";
+	public static final String netdevPath = "/proc/net/dev";
+	public static final String partitionsPath = "/proc/partitions";
+	public static final String diskstatsPath = "/proc/diskstats";
+	public static final String EMPTY = "";
+	public static final String COLON = ":";
+	public static final String SPACE = " ";
+	public static final String SHARP = "#";
+	public static final String LINE_SEPARATOR = "line.separator";
 
 	/**
 	 * @param usageType
@@ -111,7 +111,7 @@ public class ProcParser
 			for (int core = 0; core <= numberOfCores; core++)
 			{
 				data.add(String.valueOf(core));
-				tempData = br.readLine().split(SPACE);
+				tempData = Utils.removeEmptyStringsFromArray(br.readLine().split(SPACE));
 				// Adds the first 9 fields.
 				for (int field = 1; field < 10; field++)
 				{

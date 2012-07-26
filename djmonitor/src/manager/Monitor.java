@@ -46,7 +46,7 @@ public class Monitor
 	{
 		String ipmask = "\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b";
 
-		if (!Utils.stringNotEmpty(argAddress) || !ipmask.matches(argAddress))
+		if (!Utils.stringNotEmpty(argAddress))// || !ipmask.matches(argAddress))
 			throw new IllegalArgumentException("Parameter: <Server Address> empty or wrong format.");
 		else
 			return argAddress;

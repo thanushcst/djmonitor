@@ -2,8 +2,6 @@ package manager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import parser.ProcParser;
 import usage.*;
 import utils.Utils;
@@ -33,12 +31,7 @@ public enum NodeInfoGather {
                 fillDiskData(pp.gatherUsage(UsageType.DISK)),
                 fillNetworkData(pp.gatherUsage(UsageType.NETWORK)));
 
-        if (mData != null) {
-            return mData;
-        } else {
-            Logger.getLogger(NodeInfoGather.class.getName()).log(Level.SEVERE, "Monitored Data object null");
-            return null;
-        }
+        return mData;
     }
 
     /**
