@@ -15,6 +15,8 @@ import utils.Utils;
 public class Monitor
 {
 
+	private static final int GATHER_INTERVAL = 5000;
+
 	public static void main(String[] args) throws IOException
 	{
 		if (args.length < 1 || args.length > 3)
@@ -44,7 +46,7 @@ public class Monitor
 	 */
 	private static String getServerAddressFromArgs(String argAddress) throws IllegalArgumentException
 	{
-		String ipmask = "\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b";
+		// String ipmask = "\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b";
 
 		if (!Utils.stringNotEmpty(argAddress))// || !ipmask.matches(argAddress))
 			throw new IllegalArgumentException("Parameter: <Server Address> empty or wrong format.");
@@ -76,7 +78,7 @@ public class Monitor
 	 */
 	private static void startMonitoringClientService(String _serverAddress, int _serverPort) throws IllegalArgumentException, NumberFormatException
 	{
-		new MonitoringClient(5000, _serverAddress, _serverPort);
+		new MonitoringClient(GATHER_INTERVAL, _serverAddress, _serverPort);
 	}
 
 	/**
@@ -105,7 +107,7 @@ public class Monitor
 			// Block waiting for connection
 			Socket clntSock = servSock.accept();
 			totalClientsConnected++;
-			Thread thread = new Thread(new MonitoringMaster(clntSock, hdb));
+			Thread thread = new Thread(new MonitoringMaster(GATHER_INTERVAL, clntSock, hdb));
 			thread.start();
 			logger.info("Created and started Thread " + thread.getName());
 		}
