@@ -7,6 +7,7 @@ package usage;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -21,17 +22,17 @@ public class MonitoredData implements Serializable {
     private int nodeID;
     private ArrayList<CpuData> cpu;
     private MemData mem;
-    private ArrayList<DiskData> disk;
-    private ArrayList<NetworkData> net;
+    private Map<String, DiskData> disk;
+    private Map<String, NetworkData> net;
 
-    public MonitoredData(int iteracao, ArrayList<CpuData> _cpu, MemData _mem, ArrayList<DiskData> _disk, ArrayList<NetworkData> _net) {
+    public MonitoredData(int iteracao, ArrayList<CpuData> _cpu, MemData _mem, Map<String, DiskData> _disk, Map<String, NetworkData> map) {
         if (_cpu == null) {
             throw new ExceptionInInitializerError("CPU monitored data object is null");
         } else if (_mem == null) {
             throw new ExceptionInInitializerError("Memory monitored data object is null");
         } else if (_disk == null) {
             throw new ExceptionInInitializerError("Disk monitored data object is null");
-        } else if (_net == null) {
+        } else if (map == null) {
             throw new ExceptionInInitializerError("Network monitored data object is null");
         }
 
@@ -39,7 +40,7 @@ public class MonitoredData implements Serializable {
         this.cpu = _cpu;
         this.mem = _mem;
         this.disk = _disk;
-        this.net = _net;
+        this.net = map;
     }
 
     public int getNodeID() {
@@ -63,14 +64,14 @@ public class MonitoredData implements Serializable {
     /**
      * @return the disk
      */
-    public List<DiskData> getDisk() {
+    public Map<String, DiskData> getDisk() {
         return this.disk;
     }
 
     /**
      * @return the net
      */
-    public List<NetworkData> getNet() {
+    public Map<String, NetworkData> getNet() {
         return this.net;
     }
 }

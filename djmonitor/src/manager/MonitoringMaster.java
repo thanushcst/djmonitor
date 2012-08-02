@@ -3,8 +3,8 @@ package manager;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,6 +16,7 @@ import storage.HistoricalDatabase;
 import usage.CpuData;
 import usage.DiskData;
 import usage.MonitoredData;
+import usage.NetworkData;
 
 public class MonitoringMaster implements Runnable
 {
@@ -67,9 +68,9 @@ public class MonitoringMaster implements Runnable
 			while ((mdata = (MonitoredData) ois.readObject()) != null)
 			{
 				System.out.println("Got received data. Ready to save.");
-				//this.hdb.saveOrUpdate(mdata);
+				// this.hdb.saveOrUpdate(mdata);
 				System.out.println("Monitored Data arrived at home from node: " + String.valueOf(mdata.getNodeID()));
-				calculateUsage(mdata);
+				calculateUsage(mdata, 10);
 			}
 
 		} catch (IOException ex)
@@ -90,17 +91,24 @@ public class MonitoringMaster implements Runnable
 	}
 
 	@SuppressWarnings("unchecked")
-	private void calculateUsage(MonitoredData _actualData)
+	private void calculateUsage(MonitoredData _actualData, int _interval)
 	{
 		if (!isFirstIteration)
 		{
 			printCpu(_actualData.getCpu(), ((MonitoredData) this.bufPreviouslyData.get()).getCpu());
 
-			printDisk(_actualData.getDisk(), 10);
+			// TODO: Numero de acessos/leituras na memoria.
 
-			/* # Numero de acessos/leituras na memoria */
+			/*
+			 * Test if there is enough elements collected already to analyze for
+			 * the desired interval
+			 */
+			if (this.bufPreviouslyData.size() < (_interval / this.gatherInterval))
+				return;
 
-			/* # taxa (recebidos/transmitidos)/total */
+			printDisk(_actualData.getDisk(), _interval);
+			printNetwork(_actualData.getNet(), _interval);
+
 		} else
 			this.isFirstIteration = false;
 
@@ -109,50 +117,38 @@ public class MonitoringMaster implements Runnable
 
 	}
 
+	private void printNetwork(Map<String, NetworkData> mapNetwork, int _interval)
+	{
+		NetworkData mainInterfacePreviously;
+		NetworkData mainInterfaceActual;
+
+		mainInterfacePreviously = getMonitoredDataObjectForInterval(_interval).getNet().get("eth1");
+		mainInterfaceActual = mapNetwork.get("eth1");
+
+		// Found a way to get the maximum bandwidth of the network card...
+		
+		
+
+	}
+
 	/*
 	 * # Nos ultimo t de tempo qual a intensidade de uso do disco (ms fazendo
 	 * IO/total ms transcorrido) Percentual ou numero de requisicoes
 	 */
-	private void printDisk(List<DiskData> lstActualDisk, int interval)
+	private void printDisk(Map<String, DiskData> mapActualDisk, int _interval)
 	{
-		/*
-		 * Teste se tem elementos suficientes coletados para fazer a analize do
-		 * intervalo de tempo desejado.
-		 */
-		if (this.bufPreviouslyData.size() < (interval / this.gatherInterval))
-			return;
-
-		Buffer temp = this.bufPreviouslyData;
-
 		DiskData mainDiskPreviously;
 		DiskData mainDiskActual;
 
-		for (int i = 0; i < (interval / this.gatherInterval) - 1; i++)
-		{
-			temp.get();
-		}
-		mainDiskPreviously = getMainDiskDataPartition(((MonitoredData) temp.get()).getDisk(), "sda1");
-		mainDiskActual = getMainDiskDataPartition(lstActualDisk, "sda1");
+		mainDiskPreviously = getMonitoredDataObjectForInterval(_interval).getDisk().get("sda1");
+		mainDiskActual = mapActualDisk.get("sda1");
 
-		long diskIoIntensity = (mainDiskActual.getMillisecondsSpentInIO() - mainDiskPreviously.getMillisecondsSpentInIO()) / interval;
+		long diskIoIntensity = (mainDiskActual.getMillisecondsSpentInIO() - mainDiskPreviously.getMillisecondsSpentInIO()) / _interval;
 
 		System.out.println("Disk I/O Intensity. ");
 		System.out.println("Main Partition name: " + "sda1");
 		System.out.println("I/O value          : " + String.valueOf(diskIoIntensity));
 
-	}
-
-	/**
-	 * @return
-	 */
-	private DiskData getMainDiskDataPartition(List<DiskData> lstDisk, String partitionName)
-	{
-		for (DiskData d : lstDisk)
-		{
-			if (d.getName().equals(partitionName))
-				return d;
-		}
-		return null;
 	}
 
 	/**
@@ -182,6 +178,25 @@ public class MonitoringMaster implements Runnable
 			System.out.println("Core number: " + String.valueOf(core.getCoreId()));
 			System.out.println("Core %     : " + String.valueOf(usage));
 		}
+	}
+
+	/**
+	 * To analyze some component during a specific time interval, we must
+	 * compare the current monitored data object to the one collected the
+	 * interval seconds before.
+	 * 
+	 * This method returns the monitored data object gathered interval seconds
+	 * before.
+	 */
+	private MonitoredData getMonitoredDataObjectForInterval(int interval)
+	{
+		Buffer temp = this.bufPreviouslyData;
+
+		for (int i = 0; i < (interval / this.gatherInterval) - 1; i++)
+		{
+			temp.get();
+		}
+		return (MonitoredData) temp.get();
 	}
 
 	@Override

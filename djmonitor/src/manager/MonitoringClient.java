@@ -179,15 +179,15 @@ class Sender implements Runnable
 			System.out.print("CPU:");
 			System.out.println(o.toString());
 		}
-		for (DiskData o : tempData.getDisk())
+		for (String o : tempData.getDisk().keySet())
 		{
 			System.out.print("DISK:");
-			System.out.println(o.toString());
+			System.out.println(tempData.getDisk().get(o).toString());
 		}
-		for (NetworkData o : tempData.getNet())
+		for (String o : tempData.getNet().keySet())
 		{
 			System.out.print("NETWORK:");
-			System.out.println(o.toString());
+			System.out.println(tempData.getNet().get(o).toString());
 		}
 		System.out.print("MEMORY:");
 		System.out.println(tempData.getMem().toString());

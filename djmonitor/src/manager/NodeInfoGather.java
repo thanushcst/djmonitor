@@ -2,6 +2,8 @@ package manager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import parser.ProcParser;
 import usage.*;
 import utils.Utils;
@@ -86,12 +88,14 @@ public enum NodeInfoGather {
      * Creates a list of Disk objects; Each object of this list correspond to a
      * disk physical partition.
      */
-    private ArrayList<DiskData> fillDiskData(List<String> gatheredData) {
-        ArrayList<DiskData> d = new ArrayList<DiskData>();
+    private Map<String, DiskData> fillDiskData(List<String> gatheredData) {
+        
+    	Map<String, DiskData> d = null;
         int offset = 14;
 
         for (int base = 0; base < gatheredData.size(); base += offset) {
-            d.add(new DiskData(gatheredData.get(base),
+            d.put(gatheredData.get(base), 
+            		new DiskData(gatheredData.get(base),
                     gatheredData.get(base + 1),
                     gatheredData.get(base + 2),
                     Long.parseLong(gatheredData.get(base + 3)),
@@ -114,12 +118,30 @@ public enum NodeInfoGather {
      * Creates a list of Network objects; Each object of this list correspond to
      * a network interface.
      */
-    private ArrayList<NetworkData> fillNetworkData(List<String> gatheredData) {
-        ArrayList<NetworkData> n = new ArrayList<NetworkData>();
+    private Map<String, NetworkData> fillNetworkData(List<String> gatheredData) {
+        Map<String, NetworkData> n = null;
+    	//ArrayList<NetworkData> n = new ArrayList<NetworkData>();
         int offset = 17;
         for (int base = 0; base < gatheredData.size(); base += offset) {
             // std::string, long int, int, int, int, int, int, int, int, long int, int, int, int, int, int, int, int)
-            n.add(new NetworkData(gatheredData.get(base),
+            /*n.add(new NetworkData(gatheredData.get(base),
+                    Long.parseLong(gatheredData.get(base + 1)),
+                    Integer.parseInt(gatheredData.get(base + 2)),
+                    Integer.parseInt(gatheredData.get(base + 3)),
+                    Integer.parseInt(gatheredData.get(base + 4)),
+                    Integer.parseInt(gatheredData.get(base + 5)),
+                    Integer.parseInt(gatheredData.get(base + 6)),
+                    Integer.parseInt(gatheredData.get(base + 7)),
+                    Integer.parseInt(gatheredData.get(base + 8)),
+                    Long.parseLong(gatheredData.get(base + 9)),
+                    Integer.parseInt(gatheredData.get(base + 10)),
+                    Integer.parseInt(gatheredData.get(base + 11)),
+                    Integer.parseInt(gatheredData.get(base + 12)),
+                    Integer.parseInt(gatheredData.get(base + 13)),
+                    Integer.parseInt(gatheredData.get(base + 14)),
+                    Integer.parseInt(gatheredData.get(base + 15)),
+                    Integer.parseInt(gatheredData.get(base + 16))));*/
+            n.put(gatheredData.get(base), new NetworkData(gatheredData.get(base),
                     Long.parseLong(gatheredData.get(base + 1)),
                     Integer.parseInt(gatheredData.get(base + 2)),
                     Integer.parseInt(gatheredData.get(base + 3)),

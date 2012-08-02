@@ -1,15 +1,19 @@
 package storage;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.joda.time.DateTime;
+
 import usage.CpuData;
-import usage.DiskData;
 import usage.MonitoredData;
-import usage.NetworkData;
 
 public class HistoricalDatabase
 {
@@ -79,13 +83,13 @@ public class HistoricalDatabase
 		{
 			saveOrUpdateToDatabase(String.format(INSERT_CPU_USAGE, mData.getNodeID(), timeID, o.getCoreId(), o.getUser(), o.getNice(), o.getSysmode(), o.getIdle(), o.getIowait(), o.getIrq(), o.getSoftirq(), o.getSteal(), o.getGuest()));
 		}
-		for (DiskData o : mData.getDisk())
+		for (String o : mData.getDisk().keySet())
 		{
-			saveOrUpdateToDatabase(String.format(INSERT_DISK_USAGE, mData.getNodeID(), timeID, o.getName(), o.getReadsCompleted(), o.getReadsMerged(), o.getWritesMerged(), o.getSectorsRead(), o.getMillisecondsReading(), o.getWritesCompleted(), o.getSectorsWritten(), o.getMillisecondsWriting(), o.getIosInProgress(), o.getMillisecondsSpentInIO(), o.getWeightedMillisecondsDoingIO()));
+			saveOrUpdateToDatabase(String.format(INSERT_DISK_USAGE, mData.getNodeID(), timeID, mData.getDisk().get(o).getName(), mData.getDisk().get(o).getReadsCompleted(), mData.getDisk().get(o).getReadsMerged(), mData.getDisk().get(o).getWritesMerged(), mData.getDisk().get(o).getSectorsRead(), mData.getDisk().get(o).getMillisecondsReading(), mData.getDisk().get(o).getWritesCompleted(), mData.getDisk().get(o).getSectorsWritten(), mData.getDisk().get(o).getMillisecondsWriting(), mData.getDisk().get(o).getIosInProgress(), mData.getDisk().get(o).getMillisecondsSpentInIO(), mData.getDisk().get(o).getWeightedMillisecondsDoingIO()));
 		}
-		for (NetworkData o : mData.getNet())
+		for (String o : mData.getNet().keySet())
 		{
-			saveOrUpdateToDatabase(String.format(INSERT_NETWORK_USAGE, mData.getNodeID(), timeID, o.getInterfaceName(), o.getReceive().getRX_Bytes(), o.getReceive().getRX_Packets(), o.getReceive().getRX_Erros(), o.getReceive().getRX_Dropped(), o.getReceive().getRX_Fifo(), o.getReceive().getRX_Frame(), o.getReceive().getRX_Compressed(), o.getReceive().getRX_Multicast(), o.getTransmit().getTX_Bytes(), o.getTransmit().getTX_Packets(), o.getTransmit().getTX_Erros(), o.getTransmit().getTX_Dropped(), o.getTransmit().getTX_Fifo(), o.getTransmit().getTX_Collisions(), o.getTransmit().getTX_CarrierErrors(), o.getTransmit().getTX_Compressed()));
+			saveOrUpdateToDatabase(String.format(INSERT_NETWORK_USAGE, mData.getNodeID(), timeID, mData.getNet().get(o).getInterfaceName(), mData.getNet().get(o).getReceive().getRX_Bytes(), mData.getNet().get(o).getReceive().getRX_Packets(), mData.getNet().get(o).getReceive().getRX_Erros(), mData.getNet().get(o).getReceive().getRX_Dropped(), mData.getNet().get(o).getReceive().getRX_Fifo(), mData.getNet().get(o).getReceive().getRX_Frame(), mData.getNet().get(o).getReceive().getRX_Compressed(), mData.getNet().get(o).getReceive().getRX_Multicast(), mData.getNet().get(o).getTransmit().getTX_Bytes(), mData.getNet().get(o).getTransmit().getTX_Packets(), mData.getNet().get(o).getTransmit().getTX_Erros(), mData.getNet().get(o).getTransmit().getTX_Dropped(), mData.getNet().get(o).getTransmit().getTX_Fifo(), mData.getNet().get(o).getTransmit().getTX_Collisions(), mData.getNet().get(o).getTransmit().getTX_CarrierErrors(), mData.getNet().get(o).getTransmit().getTX_Compressed()));
 		}
 
 		return true;
