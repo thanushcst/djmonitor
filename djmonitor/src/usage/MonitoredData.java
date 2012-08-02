@@ -20,27 +20,27 @@ public class MonitoredData implements Serializable {
      */
     private static final long serialVersionUID = 7909922150038205539L;
     private int nodeID;
-    private ArrayList<CpuData> cpu;
+    private Map<Integer, CpuData> cpu;
     private MemData mem;
     private Map<String, DiskData> disk;
     private Map<String, NetworkData> net;
 
-    public MonitoredData(int iteracao, ArrayList<CpuData> _cpu, MemData _mem, Map<String, DiskData> _disk, Map<String, NetworkData> map) {
+    public MonitoredData(int _uuid, Map<Integer, CpuData> _cpu, MemData _mem, Map<String, DiskData> _disk, Map<String, NetworkData> _net) {
         if (_cpu == null) {
             throw new ExceptionInInitializerError("CPU monitored data object is null");
         } else if (_mem == null) {
             throw new ExceptionInInitializerError("Memory monitored data object is null");
         } else if (_disk == null) {
             throw new ExceptionInInitializerError("Disk monitored data object is null");
-        } else if (map == null) {
+        } else if (_net == null) {
             throw new ExceptionInInitializerError("Network monitored data object is null");
         }
 
-        this.nodeID = iteracao; //Utils.getIPAddress();
+        this.nodeID = _uuid;
         this.cpu = _cpu;
         this.mem = _mem;
         this.disk = _disk;
-        this.net = map;
+        this.net = _net;
     }
 
     public int getNodeID() {
@@ -50,7 +50,7 @@ public class MonitoredData implements Serializable {
     /**
      * @return the cpu
      */
-    public List<CpuData> getCpu() {
+    public Map<Integer, CpuData> getCpu() {
         return this.cpu;
     }
 

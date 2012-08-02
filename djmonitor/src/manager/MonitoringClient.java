@@ -174,10 +174,10 @@ class Sender implements Runnable
 	@SuppressWarnings("unused")
 	private void printMonitoredData(MonitoredData tempData)
 	{
-		for (CpuData o : tempData.getCpu())
+		for (int core = 0; core < tempData.getCpu().keySet().size(); core++)
 		{
 			System.out.print("CPU:");
-			System.out.println(o.toString());
+			System.out.println(tempData.getCpu().get(core).toString());
 		}
 		for (String o : tempData.getDisk().keySet())
 		{

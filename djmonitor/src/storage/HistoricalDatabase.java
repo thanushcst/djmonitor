@@ -79,9 +79,9 @@ public class HistoricalDatabase
 		saveOrUpdateToDatabase(INSERT_NODE.replace("?", String.valueOf(mData.getNodeID())));
 
 		saveOrUpdateToDatabase(String.format(INSERT_MEMORY_USAGE, mData.getNodeID(), timeID, mData.getMem().getSize(), mData.getMem().getResident(), mData.getMem().getShare(), mData.getMem().getText(), mData.getMem().getData(), mData.getMem().getVsize(), mData.getMem().getRss(), mData.getMem().getRsslim(), mData.getMem().getMemTotal(), mData.getMem().getMemUsed(), mData.getMem().getMemFree(), mData.getMem().getMemBuffers(), mData.getMem().getMemCached()));
-		for (CpuData o : mData.getCpu())
+		for (int core = 0; core < mData.getCpu().keySet().size(); core++)
 		{
-			saveOrUpdateToDatabase(String.format(INSERT_CPU_USAGE, mData.getNodeID(), timeID, o.getCoreId(), o.getUser(), o.getNice(), o.getSysmode(), o.getIdle(), o.getIowait(), o.getIrq(), o.getSoftirq(), o.getSteal(), o.getGuest()));
+			saveOrUpdateToDatabase(String.format(INSERT_CPU_USAGE, mData.getNodeID(), timeID, mData.getCpu().get(core).getCoreId(), mData.getCpu().get(core).getUser(), mData.getCpu().get(core).getNice(), mData.getCpu().get(core).getSysmode(), mData.getCpu().get(core).getIdle(), mData.getCpu().get(core).getIowait(), mData.getCpu().get(core).getIrq(), mData.getCpu().get(core).getSoftirq(), mData.getCpu().get(core).getSteal(), mData.getCpu().get(core).getGuest()));
 		}
 		for (String o : mData.getDisk().keySet())
 		{

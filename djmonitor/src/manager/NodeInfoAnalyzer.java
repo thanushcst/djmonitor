@@ -1,6 +1,5 @@
 package manager;
 
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.collections.Buffer;
@@ -36,7 +35,7 @@ public class NodeInfoAnalyzer
 	{
 		if (!this.isFirstIteration)
 		{
-			printCpu(_actualData.getCpu(), ((MonitoredData) this.bufPreviouslyData.get()).getCpu());
+			printCpu(_actualData.getCpu(), getMonitoredDataObjectForInterval(5000).getCpu());
 
 			// TODO: Numero de acessos/leituras na memoria.
 
@@ -67,6 +66,12 @@ public class NodeInfoAnalyzer
 		mainInterfaceActual = mapNetwork.get("eth1");
 
 		// Found a way to get the maximum bandwidth of the network card...
+		getNetworkAdapterMaxBandwidth();
+	}
+
+	private void getNetworkAdapterMaxBandwidth()
+	{
+		// TODO Auto-generated method stub
 
 	}
 
@@ -100,23 +105,33 @@ public class NodeInfoAnalyzer
 	 * differences, calculate the usage for the core by subtracting the idle
 	 * time from the total time and dividing by the total time.
 	 */
-	private void printCpu(List<CpuData> lstActualCpu, List<CpuData> lstPreviouslyCpu)
+	private void printCpu(Map<Integer, CpuData> mapActualCpu, Map<Integer, CpuData> mapPreviouslyCpu)
+	{
+		for (int core = 0; core < mapActualCpu.keySet().size(); core++)
+		{
+			System.out.println("CPU Usage per core.");
+			System.out.println("Core number: " + String.valueOf(core));
+			System.out.println("Core %     : " + String.valueOf(calculateCpuUsage(mapActualCpu, mapPreviouslyCpu, core)));
+		}
+	}
+
+	/**
+	 * @param mapActualCpu
+	 * @param mapPreviouslyCpu
+	 * @param core
+	 *            : the number of the core. A "0" value means that is sum off
+	 *            all cores
+	 * @return the usage tax value
+	 */
+	private long calculateCpuUsage(Map<Integer, CpuData> mapActualCpu, Map<Integer, CpuData> mapPreviouslyCpu, int core)
 	{
 		long totalDiff;
 		long idleDiff;
-		long usage = 0;
-
-		System.out.println("CPU Usage per core.");
-		for (CpuData core : lstActualCpu)
-		{
-			totalDiff = core.getTotalTimes() - lstPreviouslyCpu.get(core.getCoreId()).getTotalTimes();
-			idleDiff = core.getIdle() - lstPreviouslyCpu.get(core.getCoreId()).getIdle();
-			if (totalDiff != 0)
-				usage = (1000 * (totalDiff - idleDiff) / totalDiff + 5) / 10;
-
-			System.out.println("Core number: " + String.valueOf(core.getCoreId()));
-			System.out.println("Core %     : " + String.valueOf(usage));
-		}
+		totalDiff = mapActualCpu.get(core).getTotalTimes() - mapPreviouslyCpu.get(core).getTotalTimes();
+		idleDiff = mapActualCpu.get(core).getIdle() - mapPreviouslyCpu.get(core).getIdle();
+		if (totalDiff != 0)
+			return (1000 * (totalDiff - idleDiff) / totalDiff + 5) / 10;
+		return -1;
 	}
 
 	/**

@@ -1,6 +1,7 @@
 package manager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,12 +41,13 @@ public enum NodeInfoGather {
      * Creates a list of CPU objects; Each objects of this list correspond to a
      * CPU core. The first is the sum of all cores.
      */
-    private ArrayList<CpuData> fillCpuData(ArrayList<String> gatheredData) {
-        ArrayList<CpuData> c = new ArrayList<CpuData>();
+    private Map<Integer, CpuData> fillCpuData(ArrayList<String> gatheredData) {
+        Map<Integer, CpuData> c = new HashMap<Integer, CpuData>();
         //c.add(new CpuData(coreId, user, nice, sysmode, idle, iowait, irq, softirq, steal, guest));
         int offset = 10;
         for (int base = 0; base < gatheredData.size(); base += offset) {
-            c.add(new CpuData(Integer.parseInt(gatheredData.get(base)),
+            c.put(Integer.parseInt(gatheredData.get(base)),
+            		new CpuData(Integer.parseInt(gatheredData.get(base)),
                     Integer.parseInt(gatheredData.get(base + 1)),
                     Long.parseLong(gatheredData.get(base + 2)),
                     Long.parseLong(gatheredData.get(base + 3)),
@@ -90,7 +92,7 @@ public enum NodeInfoGather {
      */
     private Map<String, DiskData> fillDiskData(List<String> gatheredData) {
         
-    	Map<String, DiskData> d = null;
+    	Map<String, DiskData> d =  new HashMap<String, DiskData>();
         int offset = 14;
 
         for (int base = 0; base < gatheredData.size(); base += offset) {
@@ -113,34 +115,14 @@ public enum NodeInfoGather {
 
         return d;
     }
-
     /**
      * Creates a list of Network objects; Each object of this list correspond to
      * a network interface.
      */
     private Map<String, NetworkData> fillNetworkData(List<String> gatheredData) {
-        Map<String, NetworkData> n = null;
-    	//ArrayList<NetworkData> n = new ArrayList<NetworkData>();
+        Map<String, NetworkData> n = new HashMap<String, NetworkData>();
         int offset = 17;
         for (int base = 0; base < gatheredData.size(); base += offset) {
-            // std::string, long int, int, int, int, int, int, int, int, long int, int, int, int, int, int, int, int)
-            /*n.add(new NetworkData(gatheredData.get(base),
-                    Long.parseLong(gatheredData.get(base + 1)),
-                    Integer.parseInt(gatheredData.get(base + 2)),
-                    Integer.parseInt(gatheredData.get(base + 3)),
-                    Integer.parseInt(gatheredData.get(base + 4)),
-                    Integer.parseInt(gatheredData.get(base + 5)),
-                    Integer.parseInt(gatheredData.get(base + 6)),
-                    Integer.parseInt(gatheredData.get(base + 7)),
-                    Integer.parseInt(gatheredData.get(base + 8)),
-                    Long.parseLong(gatheredData.get(base + 9)),
-                    Integer.parseInt(gatheredData.get(base + 10)),
-                    Integer.parseInt(gatheredData.get(base + 11)),
-                    Integer.parseInt(gatheredData.get(base + 12)),
-                    Integer.parseInt(gatheredData.get(base + 13)),
-                    Integer.parseInt(gatheredData.get(base + 14)),
-                    Integer.parseInt(gatheredData.get(base + 15)),
-                    Integer.parseInt(gatheredData.get(base + 16))));*/
             n.put(gatheredData.get(base), new NetworkData(gatheredData.get(base),
                     Long.parseLong(gatheredData.get(base + 1)),
                     Integer.parseInt(gatheredData.get(base + 2)),
