@@ -150,9 +150,9 @@ public class NodeInfoAnalyzer
 
 	/**
 	 * @param mapActualCpu
-	 *            : The collection with the least gathered Cpu monitored data
+	 *            : The collection with the least gathered CPU monitored data
 	 * @param mapPreviouslyCpu
-	 *            : The collection with the immediately previously gathered Cpu
+	 *            : The collection with the immediately previously gathered CPU
 	 *            monitored data
 	 * @param core
 	 *            : the number of the core. A "0" value means that is sum off

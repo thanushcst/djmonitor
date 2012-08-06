@@ -112,7 +112,7 @@ public class ProcParser
 			{
 				data.add(String.valueOf(core));
 				tempData = Utils.removeEmptyStringsFromArray(br.readLine()
-						.split(SPACE));
+						.split(SPACE));				
 				// Adds the first 9 fields.
 				for (int field = 1; field < 10; field++)
 				{
