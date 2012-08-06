@@ -1,9 +1,13 @@
 package manager;
 
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.collections.Buffer;
 import org.apache.commons.collections.buffer.CircularFifoBuffer;
+
+import parser.ProcParser;
 
 import usage.CpuData;
 import usage.DiskData;
@@ -14,14 +18,12 @@ import utils.Utils;
 public class NodeInfoAnalyzer
 {
 	private Buffer bufPreviouslyData;
-	private Boolean isFirstIteration;
 	private int gatherInterval;
 	private int networkAdapterCapacity;
 
 	public NodeInfoAnalyzer(int gatherInterval)
 	{
 		this.bufPreviouslyData = new CircularFifoBuffer(12);
-		this.isFirstIteration = true;
 		this.gatherInterval = gatherInterval / 1000;
 		this.networkAdapterCapacity = Utils.getNetworkAdapterCapacity();
 	}
@@ -38,32 +40,33 @@ public class NodeInfoAnalyzer
 	@SuppressWarnings("unchecked")
 	public void analyze(MonitoredData _actualData, int _interval)
 	{
-		if (!this.isFirstIteration)
+		/*
+		 * Test if there is enough elements collected to analyze for the desired
+		 * interval
+		 */
+		if (this.bufPreviouslyData.size() < (_interval / this.gatherInterval))
 		{
-			printCpu(_actualData.getCpu(),
-					getMonitoredDataObjectForInterval(_interval).getCpu());
-			/*
-			 * Test if there is enough elements collected to analyze for the
-			 * desired interval
-			 */
-			if (this.bufPreviouslyData.size() < (_interval / this.gatherInterval))
+			System.out.println("Actual buffer size: " + String
+					.valueOf(this.bufPreviouslyData.size()));
+			System.out.println("Actual interval   : " + String
+					.valueOf(this.gatherInterval));
+		} else
+		{
+			try
 			{
-				System.out.println("Actual buffer size: " + String
-						.valueOf(this.bufPreviouslyData.size()));
-				System.out.println("Actual interval   : " + String
-						.valueOf(this.gatherInterval));
-			} else
-			{
+				printCpu(_actualData.getCpu(), _interval);
 				printDisk(_actualData.getDisk(), _interval);
 				printNetwork(_actualData.getNet(), _interval);
+				
+			} catch (Exception e)
+			{
+				Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE,
+						null, e);
 			}
-
-		} else
-			this.isFirstIteration = false;
+		}
 
 		// Add one more monitored data object to buffer
 		this.bufPreviouslyData.add(_actualData);
-
 	}
 
 	private void printNetwork(Map<String, NetworkData> mapActualNetwork, int _interval)
@@ -98,8 +101,8 @@ public class NodeInfoAnalyzer
 	 */
 	private void printDisk(Map<String, DiskData> mapActualDisk, int _interval)
 	{
-		DiskData mainDiskPreviously = getMonitoredDataObjectForInterval(
-				_interval).getDisk().get("sda1");
+		Map<String, DiskData> mainDiskPreviously = getMonitoredDataObjectForInterval(
+				_interval).getDisk();
 		DiskData mainDiskActual = mapActualDisk.get("sda1");
 
 		System.out.println("Disk I/O Intensity. ");
@@ -107,7 +110,7 @@ public class NodeInfoAnalyzer
 		System.out.println("   I/O value          : " + String
 				.valueOf(calculateDiskUsage(_interval,
 						mainDiskActual.getMillisecondsSpentInIO(),
-						mainDiskPreviously.getMillisecondsSpentInIO())));
+						mainDiskPreviously.get("sda1").getMillisecondsSpentInIO())));
 
 	}
 
@@ -132,14 +135,16 @@ public class NodeInfoAnalyzer
 	 * differences, calculate the usage for the core by subtracting the idle
 	 * time from the total time and dividing by the total time.
 	 */
-	private void printCpu(Map<Integer, CpuData> mapActualCpu, Map<Integer, CpuData> mapPreviouslyCpu)
+	private void printCpu(Map<Integer, CpuData> mapActualCpu, int _interval)
 	{
+		Map<Integer, CpuData> cpuPreviously = getMonitoredDataObjectForInterval(
+				_interval).getCpu();
 		System.out.println("CPU Usage per core.");
 		for (int core = 0; core < mapActualCpu.keySet().size(); core++)
 		{
 			System.out.println("   Core number: " + String.valueOf(core));
 			System.out.println("   Core %     : " + calculateCpuUsage(
-					mapActualCpu, mapPreviouslyCpu, core));
+					mapActualCpu, cpuPreviously, core));
 		}
 	}
 
