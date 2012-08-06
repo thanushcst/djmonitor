@@ -9,45 +9,54 @@ import usage.CpuData;
 import usage.DiskData;
 import usage.MonitoredData;
 import usage.NetworkData;
+import utils.Utils;
 
 public class NodeInfoAnalyzer
 {
-	public Buffer bufPreviouslyData;
-	public Boolean isFirstIteration;
-	public int gatherInterval;
+	private Buffer bufPreviouslyData;
+	private Boolean isFirstIteration;
+	private int gatherInterval;
+	private int networkAdapterCapacity;
 
 	public NodeInfoAnalyzer(int gatherInterval)
 	{
 		this.bufPreviouslyData = new CircularFifoBuffer(12);
 		this.isFirstIteration = true;
 		this.gatherInterval = gatherInterval / 1000;
+		this.networkAdapterCapacity = Utils.getNetworkAdapterCapacity();
 	}
 
 	/**
 	 * Analyze the collected data.
 	 * 
-	 * @CPU: CPU load, compared to the last monitored object
-	 * @DISK: Intensity of I/O access during the specified interval
+	 * @CPU: CPU load, compared to the last monitored object.
+	 * @DISK: Intensity of I/O access during the specified interval.
 	 * @Network: Tax of packages sent and received, compared to the total
-	 *           bandwidth of the network adapter
+	 *           bandwidth of the network adapter.
+	 * @Memory: Number of reads and writes in the memory.
 	 */
+	@SuppressWarnings("unchecked")
 	public void analyze(MonitoredData _actualData, int _interval)
 	{
 		if (!this.isFirstIteration)
 		{
-			printCpu(_actualData.getCpu(), getMonitoredDataObjectForInterval(5000).getCpu());
-
-			// TODO: Numero de acessos/leituras na memoria.
-
+			printCpu(_actualData.getCpu(),
+					getMonitoredDataObjectForInterval(_interval).getCpu());
 			/*
-			 * Test if there is enough elements collected already to analyze for
-			 * the desired interval
+			 * Test if there is enough elements collected to analyze for the
+			 * desired interval
 			 */
 			if (this.bufPreviouslyData.size() < (_interval / this.gatherInterval))
-				return;
-
-			printDisk(_actualData.getDisk(), _interval);
-			printNetwork(_actualData.getNet(), _interval);
+			{
+				System.out.println("Actual buffer size: " + String
+						.valueOf(this.bufPreviouslyData.size()));
+				System.out.println("Actual interval   : " + String
+						.valueOf(this.gatherInterval));
+			} else
+			{
+				printDisk(_actualData.getDisk(), _interval);
+				printNetwork(_actualData.getNet(), _interval);
+			}
 
 		} else
 			this.isFirstIteration = false;
@@ -57,42 +66,60 @@ public class NodeInfoAnalyzer
 
 	}
 
-	private void printNetwork(Map<String, NetworkData> mapNetwork, int _interval)
+	private void printNetwork(Map<String, NetworkData> mapActualNetwork, int _interval)
 	{
-		NetworkData mainInterfacePreviously;
-		NetworkData mainInterfaceActual;
+		Map<String, NetworkData> mapPreviouslyNetwork;
 
-		mainInterfacePreviously = getMonitoredDataObjectForInterval(_interval).getNet().get("eth1");
-		mainInterfaceActual = mapNetwork.get("eth1");
+		mapPreviouslyNetwork = getMonitoredDataObjectForInterval(_interval)
+				.getNet();
 
-		// Found a way to get the maximum bandwidth of the network card...
-		getNetworkAdapterMaxBandwidth();
+		System.out.println("Network Usage per interface.");
+		for (String netInterface : mapActualNetwork.keySet())
+		{
+			System.out.println("   Interface Name: " + String
+					.valueOf(netInterface));
+			System.out.println("   Interface %   : " + String
+					.valueOf(calculateNetUsage(
+							mapActualNetwork.get(netInterface),
+							mapPreviouslyNetwork.get(netInterface),
+							this.networkAdapterCapacity)));
+		}
 	}
 
-	private void getNetworkAdapterMaxBandwidth()
+	private String calculateNetUsage(NetworkData networkDataActual, NetworkData networkDataPreviously, int networkAdapterCapacity)
 	{
-		// TODO Auto-generated method stub
-
+		return String
+				.valueOf((networkDataActual.getReceive().getRX_Bytes() - networkDataPreviously
+						.getReceive().getRX_Bytes()) / networkAdapterCapacity);
 	}
 
 	/*
-	 * # Nos ultimo t de tempo qual a intensidade de uso do disco (ms fazendo
-	 * IO/total ms transcorrido) Percentual ou numero de requisicoes
+	 * Disk I/O intensity (ms doing I/O during a total ms time interval)
 	 */
 	private void printDisk(Map<String, DiskData> mapActualDisk, int _interval)
 	{
-		DiskData mainDiskPreviously;
-		DiskData mainDiskActual;
-
-		mainDiskPreviously = getMonitoredDataObjectForInterval(_interval).getDisk().get("sda1");
-		mainDiskActual = mapActualDisk.get("sda1");
-
-		long diskIoIntensity = (mainDiskActual.getMillisecondsSpentInIO() - mainDiskPreviously.getMillisecondsSpentInIO()) / _interval;
+		DiskData mainDiskPreviously = getMonitoredDataObjectForInterval(
+				_interval).getDisk().get("sda1");
+		DiskData mainDiskActual = mapActualDisk.get("sda1");
 
 		System.out.println("Disk I/O Intensity. ");
-		System.out.println("Main Partition name: " + "sda1");
-		System.out.println("I/O value          : " + String.valueOf(diskIoIntensity));
+		System.out.println("   Main Partition name: " + "sda1");
+		System.out.println("   I/O value          : " + String
+				.valueOf(calculateDiskUsage(_interval,
+						mainDiskActual.getMillisecondsSpentInIO(),
+						mainDiskPreviously.getMillisecondsSpentInIO())));
 
+	}
+
+	/**
+	 * @param _interval
+	 * @param mainDiskPreviously
+	 * @param mainDiskActual
+	 * @return
+	 */
+	private long calculateDiskUsage(int _interval, long actualMsInIo, long previouslyMsInIo)
+	{
+		return (actualMsInIo - previouslyMsInIo) / _interval;
 	}
 
 	/**
@@ -107,31 +134,53 @@ public class NodeInfoAnalyzer
 	 */
 	private void printCpu(Map<Integer, CpuData> mapActualCpu, Map<Integer, CpuData> mapPreviouslyCpu)
 	{
+		System.out.println("CPU Usage per core.");
 		for (int core = 0; core < mapActualCpu.keySet().size(); core++)
 		{
-			System.out.println("CPU Usage per core.");
-			System.out.println("Core number: " + String.valueOf(core));
-			System.out.println("Core %     : " + String.valueOf(calculateCpuUsage(mapActualCpu, mapPreviouslyCpu, core)));
+			System.out.println("   Core number: " + String.valueOf(core));
+			System.out.println("   Core %     : " + calculateCpuUsage(
+					mapActualCpu, mapPreviouslyCpu, core));
 		}
 	}
 
 	/**
 	 * @param mapActualCpu
+	 *            : The collection with the least gathered Cpu monitored data
 	 * @param mapPreviouslyCpu
+	 *            : The collection with the immediately previously gathered Cpu
+	 *            monitored data
 	 * @param core
 	 *            : the number of the core. A "0" value means that is sum off
 	 *            all cores
 	 * @return the usage tax value
 	 */
-	private long calculateCpuUsage(Map<Integer, CpuData> mapActualCpu, Map<Integer, CpuData> mapPreviouslyCpu, int core)
+	private String calculateCpuUsage(Map<Integer, CpuData> mapActualCpu, Map<Integer, CpuData> mapPreviouslyCpu, int core)
 	{
 		long totalDiff;
 		long idleDiff;
-		totalDiff = mapActualCpu.get(core).getTotalTimes() - mapPreviouslyCpu.get(core).getTotalTimes();
-		idleDiff = mapActualCpu.get(core).getIdle() - mapPreviouslyCpu.get(core).getIdle();
+		totalDiff = mapActualCpu.get(core).getTotalTimes() - mapPreviouslyCpu
+				.get(core).getTotalTimes();
+		idleDiff = mapActualCpu.get(core).getIdle() - mapPreviouslyCpu
+				.get(core).getIdle();
+
+		return String.valueOf(calculateCpuUsageTax(totalDiff, idleDiff));
+	}
+
+	/**
+	 * @param totalDiff
+	 *            : The total (sum of all CPU times) difference time between the
+	 *            two CPU clock measures
+	 * @param idleDiff
+	 *            : The total idle difference time between the two CPU clock
+	 *            measures
+	 * @return the usage tax
+	 */
+	private long calculateCpuUsageTax(long totalDiff, long idleDiff)
+	{
 		if (totalDiff != 0)
 			return (1000 * (totalDiff - idleDiff) / totalDiff + 5) / 10;
-		return -1;
+		else
+			return -1;
 	}
 
 	/**

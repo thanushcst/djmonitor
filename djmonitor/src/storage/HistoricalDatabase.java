@@ -12,7 +12,6 @@ import java.util.logging.Logger;
 
 import org.joda.time.DateTime;
 
-import usage.CpuData;
 import usage.MonitoredData;
 
 public class HistoricalDatabase

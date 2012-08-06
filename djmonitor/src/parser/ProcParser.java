@@ -69,20 +69,20 @@ public class ProcParser
 
 		switch (uType)
 		{
-			case CPU:
-				usageData = this.gatherCpuUsage();
-				break;
-			case MEMORY:
-				usageData = this.gatherMemoryUsage(this.processPid);
-				break;
-			case DISK:
-				usageData = this.gatherDiskUsage();
-				break;
-			case NETWORK:
-				usageData = this.gatherNetworkUsage();
-				break;
-			default:
-				break;
+		case CPU:
+			usageData = this.gatherCpuUsage();
+			break;
+		case MEMORY:
+			usageData = this.gatherMemoryUsage(this.processPid);
+			break;
+		case DISK:
+			usageData = this.gatherDiskUsage();
+			break;
+		case NETWORK:
+			usageData = this.gatherNetworkUsage();
+			break;
+		default:
+			break;
 		}
 		return usageData;
 	}
@@ -111,7 +111,8 @@ public class ProcParser
 			for (int core = 0; core <= numberOfCores; core++)
 			{
 				data.add(String.valueOf(core));
-				tempData = Utils.removeEmptyStringsFromArray(br.readLine().split(SPACE));
+				tempData = Utils.removeEmptyStringsFromArray(br.readLine()
+						.split(SPACE));
 				// Adds the first 9 fields.
 				for (int field = 1; field < 10; field++)
 				{
@@ -121,7 +122,8 @@ public class ProcParser
 			br.close();
 		} catch (IOException ex)
 		{
-			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE,
+					null, ex);
 		}
 		return data;
 	}
@@ -132,7 +134,8 @@ public class ProcParser
 		String[] tempFile = null;
 
 		// Parse /proc/cpuinfo to obtain how many cores the CPU has.
-		tempFile = getContents(cpuinfoPath).split(System.getProperty(LINE_SEPARATOR));
+		tempFile = getContents(cpuinfoPath).split(
+				System.getProperty(LINE_SEPARATOR));
 		for (String line : tempFile)
 		{
 			if (line.contains("cpu cores"))
@@ -159,12 +162,16 @@ public class ProcParser
 		{
 			// Parse /proc/[pid]/statm file and fill the member values list with
 			// its contents (all)
-			tempData = getContents(pidStatmPath.replace(SHARP, String.valueOf(_processPid))).trim().split(SPACE);
+			tempData = getContents(
+					pidStatmPath.replace(SHARP, String.valueOf(_processPid)))
+					.trim().split(SPACE);
 			data.addAll(Arrays.asList(tempData));
 			// Parse /proc/[pid]/stat file and fill the member values list just
 			// with values 22, 23 and 24 (vsize, resident set size and resident
 			// set size limit).
-			tempData = getContents(pidStatPath.replace(SHARP, String.valueOf(_processPid))).trim().split(SPACE);
+			tempData = getContents(
+					pidStatPath.replace(SHARP, String.valueOf(_processPid)))
+					.trim().split(SPACE);
 			data.add(tempData[22]);
 			data.add(tempData[23]);
 			data.add(tempData[24]);
@@ -184,10 +191,12 @@ public class ProcParser
 			br.close();
 		} catch (FileNotFoundException ex)
 		{
-			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE,
+					null, ex);
 		} catch (IOException ex)
 		{
-			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE,
+					null, ex);
 		}
 		return data;
 	}
@@ -202,7 +211,8 @@ public class ProcParser
 		String[] tempData = null;
 		String[] tempFile = null;
 
-		tempFile = getContents(netdevPath).split(System.getProperty(LINE_SEPARATOR));
+		tempFile = getContents(netdevPath).split(
+				System.getProperty(LINE_SEPARATOR));
 		// Skip the first two lines (headers)
 		for (int i = 2; i < tempFile.length; i++)
 		{
@@ -226,7 +236,8 @@ public class ProcParser
 		String[] tempData = null;
 		String[] tempFile = null;
 
-		tempFile = getContents(partitionsPath).split(System.getProperty(LINE_SEPARATOR));
+		tempFile = getContents(partitionsPath).split(
+				System.getProperty(LINE_SEPARATOR));
 
 		// parse the disk partitions
 		for (int i = 2; i < tempFile.length; i++)
@@ -267,18 +278,22 @@ public class ProcParser
 		String[] tempData = null;
 		String[] tempFile = null;
 
-		tempFile = getContents(diskstatsPath).split(System.getProperty(LINE_SEPARATOR));
+		tempFile = getContents(diskstatsPath).split(
+				System.getProperty(LINE_SEPARATOR));
 		ArrayList<String> tempPart = getPartitionNames(partitionData);
+		ArrayList<String> tempPartClean = new ArrayList<String>();
+		for (String part : tempPart)
+			if (part.contains("sda"))
+				tempPartClean.add(part);
 		// Parse /proc/diskstats to obtain disk statistics
-
 		for (String line : tempFile)
 		{
-			for (String partition : tempPart)
+			for (String partition : tempPartClean)
 			{
 				if (line.contains(SPACE + partition + SPACE))
 				{
 					// split(SPACE);
-					tempData = line.split(SPACE);
+					tempData = Utils.removeEmptyStringsFromArray(line.split(SPACE));
 					// adds the rest of the disk statistics
 					data.addAll(Arrays.asList(tempData));
 					data.removeAll(Collections.singleton(EMPTY));
@@ -306,7 +321,8 @@ public class ProcParser
 		{
 			// use buffering, reading one line at a time
 			// FileReader always assumes default encoding is OK!
-			BufferedReader input = new BufferedReader(new FileReader(new File(path)));
+			BufferedReader input = new BufferedReader(new FileReader(new File(
+					path)));
 			try
 			{
 				String line = null; // not declared within while loop
@@ -328,7 +344,8 @@ public class ProcParser
 			}
 		} catch (IOException ex)
 		{
-			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE,
+					null, ex);
 		}
 
 		return contents.toString();
@@ -354,7 +371,8 @@ public class ProcParser
 
 		} catch (FileNotFoundException ex)
 		{
-			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(ProcParser.class.getName()).log(Level.SEVERE,
+					null, ex);
 		}
 		return br;
 	}

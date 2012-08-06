@@ -6,10 +6,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import usage.CpuData;
-import usage.DiskData;
 import usage.MonitoredData;
-import usage.NetworkData;
 import utils.Utils;
 
 public class MonitoringClient

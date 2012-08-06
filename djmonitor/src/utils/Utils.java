@@ -1,9 +1,14 @@
 package utils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -114,6 +119,45 @@ public enum Utils
 						}
 				}
 			}
+		return -1;
+	}
+
+	/**
+	 * Get the maximum capacity of the network adapter.  
+	 */
+	public static int getNetworkAdapterCapacity()
+	{
+		List<String> command = new ArrayList<String>();
+		command.add("lshw");
+		command.add("-class");
+		command.add("network");
+
+		ProcessBuilder builder = new ProcessBuilder(command);
+		Process process;
+		try
+		{
+			process = builder.start();
+
+			InputStream is = process.getInputStream();
+			InputStreamReader isr = new InputStreamReader(is);
+			BufferedReader br = new BufferedReader(isr);
+			String line;
+			while ((line = br.readLine()) != null)
+			{
+				if (line.contains("capacity"))
+				{
+					String[] splited = removeEmptyStringsFromArray(line.split(" "));
+					if (splited[1].contains("M"))
+						splited = splited[1].split("M");
+					else if (splited[1].contains("G"))
+						splited = splited[1].split("G");
+					return Integer.valueOf(splited[0]);
+				}
+			}
+		} catch (IOException e)
+		{
+			Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, e);
+		}
 		return -1;
 	}
 }

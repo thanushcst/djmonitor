@@ -96,7 +96,7 @@ public enum NodeInfoGather {
         int offset = 14;
 
         for (int base = 0; base < gatheredData.size(); base += offset) {
-            d.put(gatheredData.get(base), 
+        	d.put(gatheredData.get(base + 2), 
             		new DiskData(gatheredData.get(base),
                     gatheredData.get(base + 1),
                     gatheredData.get(base + 2),
