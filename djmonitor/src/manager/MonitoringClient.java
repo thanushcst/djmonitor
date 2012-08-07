@@ -13,9 +13,9 @@ public class MonitoringClient
 {
 
 	public MonitoringClient(long _gatherInterval, String _servAddress,
-			int _servPort, String _sensorAddress)
+			int _servPort, String _sensorAddress, int _channels)
 	{
-		new Gather(this, _gatherInterval, _sensorAddress);
+		new Gather(this, _gatherInterval, _sensorAddress, _channels);
 		new Sender(this, _servAddress, _servPort);
 	}
 
@@ -63,16 +63,15 @@ class Gather implements Runnable
 {
 
 	MonitoringClient client;
-	String sensorAddress = null;
+	NodeInfoGather gatherService;
+	
 	long gatherInterval = 0;
-	int uuid = 0;
 
-	Gather(MonitoringClient client, long _gatherInterval, String _sensorAddress)
+	Gather(MonitoringClient client, long _gatherInterval, String _sensorAddress, int _channels)
 	{
 		this.client = client;
 		this.gatherInterval = _gatherInterval;
-		this.sensorAddress = _sensorAddress;
-		this.uuid = Utils.getNodeUUID();
+		this.gatherService = new NodeInfoGather(Utils.getNodeUUID(), _sensorAddress, _channels);
 		new Thread(this, "Gather").start();
 	}
 
@@ -90,7 +89,7 @@ class Gather implements Runnable
 				Logger.getLogger(MonitoringClient.class.getName()).log(
 						Level.SEVERE, null, ex);
 			}
-			tempData = NodeInfoGather.INSTANCE.getSystemUsage(this.uuid, this.sensorAddress);
+			tempData = gatherService.getSystemUsage();
 			System.out
 					.println("Finished gathering data from procfs. Ready to send it.");
 			client.put(tempData);

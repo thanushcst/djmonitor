@@ -22,13 +22,13 @@ public class MonitoringMaster implements Runnable
 	// Get the input and output I/O streams from socket
 	private ObjectInputStream ois;
 	// Object to analyze the data contained in the monitored objects
-	private NodeInfoAnalyzer data;
+	//private NodeInfoAnalyzer data;
 
 	public MonitoringMaster(int gtrInterval, Socket clntSock, HistoricalDatabase _hdb)
 	{
 		this.clientSock = clntSock;
 		this.hdb = _hdb;
-		this.data = new NodeInfoAnalyzer(gtrInterval);
+		//this.data = new NodeInfoAnalyzer(gtrInterval);
 		try
 		{
 			ois = new ObjectInputStream(this.clientSock.getInputStream());

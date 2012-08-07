@@ -26,20 +26,29 @@ public class Monitor
 			System.out
 					.println("monitor -c <PORT> <SERVER_ADDRESS> para rodar MonitoringClient sem sensor");
 			System.out
-					.println("monitor -c <PORT> <SERVER_ADDRESS> <SENSOR_ADDRESS> para rodar MonitoringClient com sensor");
+					.println("monitor -c <PORT> <SERVER_ADDRESS> <SENSOR_ADDRESS> <CHANNELS> para rodar MonitoringClient com sensor");
 		} else
 		{
 			if (args[0].equals("-m"))
-			{
 				startMonitoringMasterService(getServerPortFromArgs(args[1]));
-			} else if (args[0].equals("-c"))
-			{
+			else if (args[0].equals("-c"))
 				startMonitoringClientService(getServerAddressFromArgs(args[2]),
 						getServerPortFromArgs(args[1]),
-						getSensorAddressFromArgs(args[3]));
-			}
+						getSensorAddressFromArgs(args[3]),
+						getSensorNumberOfChannels(args[4]));
 			System.out.println("Press Control-C to stop.");
 		}
+	}
+
+	private static int getSensorNumberOfChannels(String _channels)
+	{
+		if (!Utils.stringNotEmpty(_channels))
+		{
+			System.out
+					.println("No specific number of channels received. Using default value 4.");
+			return 4;
+		} else
+			return Integer.parseInt(_channels);
 	}
 
 	private static String getSensorAddressFromArgs(String _sensorAddress)
@@ -62,9 +71,7 @@ public class Monitor
 	 */
 	private static String getServerAddressFromArgs(String argAddress) throws IllegalArgumentException
 	{
-		// String ipmask = "\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b";
-
-		if (!Utils.stringNotEmpty(argAddress))// || !ipmask.matches(argAddress))
+		if (!Utils.stringNotEmpty(argAddress))
 			throw new IllegalArgumentException(
 					"Parameter: <Server Address> empty or wrong format.");
 		else
@@ -94,10 +101,10 @@ public class Monitor
 	 * @throws IllegalArgumentException
 	 * @throws NumberFormatException
 	 */
-	private static void startMonitoringClientService(String _serverAddress, int _serverPort, String _sensorAddress) throws IllegalArgumentException, NumberFormatException
+	private static void startMonitoringClientService(String _serverAddress, int _serverPort, String _sensorAddress, int _channels) throws IllegalArgumentException, NumberFormatException
 	{
 		new MonitoringClient(GATHER_INTERVAL, _serverAddress, _serverPort,
-				_sensorAddress);
+				_sensorAddress, _channels);
 	}
 
 	/**
@@ -113,10 +120,10 @@ public class Monitor
 
 		// Create a server socket to accept client connection requests
 		System.out.println("Creating master service...");
-		ServerSocket servSock = new ServerSocket(_serverPort);
-		HistoricalDatabase hdb = new HistoricalDatabase("h.db");
+		final ServerSocket servSock = new ServerSocket(_serverPort);
+		final HistoricalDatabase hdb = new HistoricalDatabase("h.db");
 
-		Logger logger = Logger.getLogger("pratical");
+		final Logger logger = Logger.getLogger("pratical");
 		int totalClientsConnected = 0;
 
 		// Run forever, accepting and spawning a thread for each connection
@@ -127,10 +134,10 @@ public class Monitor
 							.format("Waiting for connections. Right now %d clients connected. ",
 									totalClientsConnected));
 			// Block waiting for connection
-			Socket clntSock = servSock.accept();
+			final Socket clntSock = servSock.accept();
 			totalClientsConnected++;
-			Thread thread = new Thread(new MonitoringMaster(GATHER_INTERVAL,
-					clntSock, hdb));
+			final Thread thread = new Thread(new MonitoringMaster(
+					GATHER_INTERVAL, clntSock, hdb));
 			thread.start();
 			logger.info("Created and started Thread " + thread.getName());
 		}

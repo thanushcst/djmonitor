@@ -4,12 +4,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import usage.UnityType;
 
 /**
  * 
@@ -28,12 +32,12 @@ public enum Utils
 	{
 		try
 		{
-			byte[] bo = new byte[100];
-			String[] cmd = { "bash", "-c", "echo $PPID" };
-			Process p = Runtime.getRuntime().exec(cmd);
+			final byte[] bo = new byte[100];
+			final String[] cmd = { "bash", "-c", "echo $PPID" };
+			final Process p = Runtime.getRuntime().exec(cmd);
 			p.getInputStream().read(bo);
 			return Integer.parseInt(new String(bo).trim());
-		} catch (IOException ex)
+		} catch (final IOException ex)
 		{
 			Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -51,7 +55,7 @@ public enum Utils
 		{
 			Integer.parseInt(value);
 			return true;
-		} catch (NumberFormatException ex)
+		} catch (final NumberFormatException ex)
 		{
 			return false;
 		}
@@ -62,8 +66,8 @@ public enum Utils
 	 */
 	public static String[] removeEmptyStringsFromArray(String[] in)
 	{
-		ArrayList<String> list = new ArrayList<String>();
-		for (String s : in)
+		final ArrayList<String> list = new ArrayList<String>();
+		for (final String s : in)
 			if (!s.equals(""))
 				list.add(s);
 
@@ -93,70 +97,85 @@ public enum Utils
 		try
 		{
 			ifs = NetworkInterface.getNetworkInterfaces();
-		} catch (SocketException ex)
+		} catch (final SocketException ex)
 		{
 			Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		if (ifs != null)
 			while (ifs.hasMoreElements())
 			{
-				NetworkInterface iface = ifs.nextElement();
+				final NetworkInterface iface = ifs.nextElement();
 				System.out.println(iface.getName());
-				Enumeration<InetAddress> en = iface.getInetAddresses();
+				final Enumeration<InetAddress> en = iface.getInetAddresses();
 				while (en.hasMoreElements())
 				{
-					InetAddress addr = en.nextElement();
-					String s = addr.getHostAddress();
-					int end = s.lastIndexOf("%");
+					final InetAddress addr = en.nextElement();
+					final String s = addr.getHostAddress();
+					final int end = s.lastIndexOf("%");
 					if (!addr.isLoopbackAddress() && !addr.isLinkLocalAddress())
 						if (end > 0)
 							System.out.println("\t" + s.substring(0, end));
 						else
-						{
 							// System.out.println("\t" + s);
 							return Math.abs(s.hashCode());
-						}
 				}
 			}
 		return -1;
 	}
 
 	/**
-	 * Get the maximum capacity of the network adapter.  
+	 * Get the maximum capacity of the network adapter.
 	 */
 	public static int getNetworkAdapterCapacity()
 	{
-		List<String> command = new ArrayList<String>();
+		final List<String> command = new ArrayList<String>();
 		command.add("lshw");
 		command.add("-class");
 		command.add("network");
 
-		ProcessBuilder builder = new ProcessBuilder(command);
+		final ProcessBuilder builder = new ProcessBuilder(command);
 		Process process;
 		try
 		{
 			process = builder.start();
 
-			InputStream is = process.getInputStream();
-			InputStreamReader isr = new InputStreamReader(is);
-			BufferedReader br = new BufferedReader(isr);
+			final InputStream is = process.getInputStream();
+			final InputStreamReader isr = new InputStreamReader(is);
+			final BufferedReader br = new BufferedReader(isr);
 			String line;
 			while ((line = br.readLine()) != null)
-			{
 				if (line.contains("capacity"))
 				{
-					String[] splited = removeEmptyStringsFromArray(line.split(" "));
+					String[] splited = removeEmptyStringsFromArray(line
+							.split(" "));
 					if (splited[1].contains("M"))
 						splited = splited[1].split("M");
 					else if (splited[1].contains("G"))
 						splited = splited[1].split("G");
 					return Integer.valueOf(splited[0]);
 				}
-			}
-		} catch (IOException e)
+		} catch (final IOException e)
 		{
 			Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, null, e);
 		}
 		return -1;
+	}
+
+	public static UnityType convertStringToUnity(String u)
+	{
+		if (u.equals(Symbols.CELCIUS))
+			return UnityType.CELCIUS;
+		else if (u.equals(Symbols.WATT))
+			return UnityType.WATT;
+		else if (u.equals(Symbols.PERCENT))
+			return UnityType.PERCENT;
+		else if (u.equals(Symbols.EMPTY))
+			return UnityType.NULL;
+		else if (u.equals(Symbols.MBITS))
+			return UnityType.MBITS;
+		else if (u.equals(Symbols.GBITS))
+			return UnityType.GBITS;
+		else
+			return null;
 	}
 }

@@ -1,6 +1,9 @@
 package usage;
 
 import java.io.Serializable;
+import java.util.Map;
+
+import org.joda.time.DateTime;
 
 /**
  * @author pmdusso
@@ -24,11 +27,33 @@ public class SensorData implements Serializable
 	 * @param voltage
 	 *            : the voltage measured by the device from a computer
 	 */
-	public SensorData(double _temperature, double _humidity, double _voltage)
+	public SensorData(DateTime _date, Map<UnityType, String> _values)
 	{
-		this.temperature = _temperature;
-		this.humidity = _humidity;
-		this.voltage = _voltage;
+		this.date = _date;
+
+		for (UnityType u : _values.keySet())
+		{
+			switch (u)
+			{
+			case CELCIUS:
+				this.temperatureUnity = u;
+				this.temperature = Double.parseDouble(_values.get(u));
+				break;
+			case WATT:
+				this.voltageUnity = u;
+				this.voltage = Double.parseDouble(_values.get(u));
+				break;
+			case PERCENT:
+				this.humidityUnity = u;
+				this.humidity = Double.parseDouble(_values.get(u));
+				break;
+			case NULL:
+				// TODO: Fourth channel, still have to be properly treated
+				break;
+			default:
+				break;
+			}
+		}
 	}
 
 	@Override
@@ -38,12 +63,21 @@ public class SensorData implements Serializable
 	}
 
 	private double temperature;
+	private UnityType temperatureUnity;
 	private double humidity;
+	private UnityType humidityUnity;
 	private double voltage;
+	private UnityType voltageUnity;
+	private DateTime date;
 
 	@Override
 	public void finalize() throws Throwable
 	{
+		/*
+		 * DATE 12/08/07 TIME 17:05:26 N 001 ^C +00219E-01 N 002 W +00000E-01 N
+		 * 003 % -00250E-01 N 004 -00150E-01
+		 */
+
 	}
 
 	/**
@@ -68,5 +102,25 @@ public class SensorData implements Serializable
 	public double getVoltage()
 	{
 		return voltage;
+	}
+
+	public UnityType getTemperatureUnity()
+	{
+		return temperatureUnity;
+	}
+
+	public UnityType getHumidityUnity()
+	{
+		return humidityUnity;
+	}
+
+	public UnityType getVoltageUnity()
+	{
+		return voltageUnity;
+	}
+
+	public DateTime getDate()
+	{
+		return date;
 	}
 }

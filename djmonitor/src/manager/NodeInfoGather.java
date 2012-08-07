@@ -1,9 +1,14 @@
 package manager;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.joda.time.DateTime;
 
 import parser.ProcParser;
 import parser.SensorParser;
@@ -13,17 +18,38 @@ import usage.MemData;
 import usage.MonitoredData;
 import usage.NetworkData;
 import usage.SensorData;
+import usage.UnityType;
 import usage.UsageType;
+import utils.Symbols;
 import utils.Utils;
 
 /**
  * 
  * @author pmdusso
  */
-public enum NodeInfoGather
+public class NodeInfoGather
 {
+	ProcParser pp;
+	SensorParser sp;
+	private final int uuid;
+	private String sensorAddress;
+	private Boolean isSensored;
+	private final int channels;
 
-	INSTANCE;
+	public NodeInfoGather(int _uuid, String _sensorAddress, int _channels)
+	{
+		uuid = _uuid;
+		channels = _channels;
+		if (Utils.stringNotEmpty(_sensorAddress))
+		{
+			sensorAddress = _sensorAddress;
+			isSensored = true;
+		}
+		isSensored = false;
+
+		pp = new ProcParser(Utils.getPid());
+		sp = new SensorParser(sensorAddress);
+	}
 
 	/**
 	 * Collect process system information from /proc file system.
@@ -31,27 +57,21 @@ public enum NodeInfoGather
 	 * @param: uuid: universally unique identifier of the node in the cluster.
 	 * 
 	 */
-	public synchronized MonitoredData getSystemUsage(int _uuid, String _sensorAddress)
+	public synchronized MonitoredData getSystemUsage()
 	{
-		MonitoredData mData = null;
+
 		SensorData sData = null;
 
-		if (Utils.stringNotEmpty(_sensorAddress))
-		{
-			sData = getSensorData(_sensorAddress);
-		}
-		
-		ProcParser pp = new ProcParser(Utils.getPid());
+		if (isSensored)
+			sData = getSensorData(sensorAddress);
 
-		System.out
-				.println("IP Address of the client: " + String.valueOf(_uuid));
-		mData = new MonitoredData(_uuid,
+		System.out.println("IP Address of the client: " + String.valueOf(uuid));
+
+		return new MonitoredData(uuid,
 				fillCpuData(pp.gatherUsage(UsageType.CPU)),
 				fillMemData(pp.gatherUsage(UsageType.MEMORY)),
 				fillDiskData(pp.gatherUsage(UsageType.DISK)),
 				fillNetworkData(pp.gatherUsage(UsageType.NETWORK)), sData);
-
-		return mData;
 	}
 
 	/**
@@ -63,11 +83,15 @@ public enum NodeInfoGather
 	 */
 	public synchronized SensorData getSensorData(String _sensorAddress)
 	{
-		// TODO: getSensorData method
-
-		SensorParser sp = new SensorParser();
-
-		return fillSensorData(sp.gatherSensor());
+		try
+		{
+			return fillSensorData(sp.gatherSensor(channels));
+		} catch (final IOException e)
+		{
+			Logger.getLogger(NodeInfoGather.class.getName()).log(Level.SEVERE,
+					null, e);
+		}
+		return null;
 	}
 
 	/**
@@ -76,9 +100,41 @@ public enum NodeInfoGather
 	 */
 	private SensorData fillSensorData(ArrayList<String> gatheredData)
 	{
-		// TODO: fillSensorData method
+		final DateTime dateComplete = new DateTime();
+		final Map<UnityType, String> values = new HashMap<UnityType, String>();
 
-		return null;
+		for (final String s : gatheredData)
+			if (s.contains("N"))
+			{
+				// E.g. N 001 ^C +00219E-01
+				final String[] tempValues = Utils.removeEmptyStringsFromArray(s
+						.split(Symbols.SPACE));
+
+				//Trata o canal 4 diferente porque ele não tem unidade (pelo menos até o momento)
+				if (!tempValues[1].equals("004"))
+					values.put(Utils.convertStringToUnity(tempValues[2]),
+							tempValues[3]);
+				else
+					values.put(UnityType.NULL, tempValues[2]);
+			} else if (s.contains("DATE"))
+			{
+				// E.g. DATE 12/08/07 (YY-MM-DD)
+				final String[] date = s.split(Symbols.SPACE)[1]
+						.split(Symbols.SLASH);
+				dateComplete.plusYears(Integer.parseInt(date[0]) + 2000);
+				dateComplete.plusMonths(Integer.parseInt(date[1]));
+				dateComplete.plusDays(Integer.parseInt(date[2]));
+			} else if (s.contains("TIME"))
+			{
+				// E.g. TIME 17:27:38
+				final String[] time = s.split(Symbols.SPACE)[1]
+						.split(Symbols.COLON);
+				dateComplete.plusHours(Integer.parseInt(time[0]));
+				dateComplete.plusMinutes(Integer.parseInt(time[1]));
+				dateComplete.plusSeconds(Integer.parseInt(time[2]));
+			}
+
+		return new SensorData(dateComplete, values);
 	}
 
 	/**
@@ -87,12 +143,9 @@ public enum NodeInfoGather
 	 */
 	private Map<Integer, CpuData> fillCpuData(ArrayList<String> gatheredData)
 	{
-		Map<Integer, CpuData> c = new HashMap<Integer, CpuData>();
-		// c.add(new CpuData(coreId, user, nice, sysmode, idle, iowait, irq,
-		// softirq, steal, guest));
-		int offset = 10;
+		final Map<Integer, CpuData> c = new HashMap<Integer, CpuData>();
+		final int offset = 10;
 		for (int base = 0; base < gatheredData.size(); base += offset)
-		{
 			c.put(Integer.parseInt(gatheredData.get(base)),
 					new CpuData(Integer.parseInt(gatheredData.get(base)),
 							Integer.parseInt(gatheredData.get(base + 1)), Long
@@ -104,7 +157,6 @@ public enum NodeInfoGather
 							Integer.parseInt(gatheredData.get(base + 7)), Long
 									.parseLong(gatheredData.get(base + 8)),
 							Long.parseLong(gatheredData.get(base + 9))));
-		}
 		return c;
 	}
 
@@ -114,7 +166,7 @@ public enum NodeInfoGather
 	 */
 	private MemData fillMemData(List<String> gatheredData)
 	{
-		MemData m = new MemData(
+		final MemData m = new MemData(
 				Integer.parseInt(gatheredData.get(0)),
 				Integer.parseInt(gatheredData.get(1)),
 				Integer.parseInt(gatheredData.get(2)),
@@ -142,11 +194,10 @@ public enum NodeInfoGather
 	private Map<String, DiskData> fillDiskData(List<String> gatheredData)
 	{
 
-		Map<String, DiskData> d = new HashMap<String, DiskData>();
-		int offset = 14;
+		final Map<String, DiskData> d = new HashMap<String, DiskData>();
+		final int offset = 14;
 
 		for (int base = 0; base < gatheredData.size(); base += offset)
-		{
 			d.put(gatheredData.get(base + 2),
 					new DiskData(gatheredData.get(base), gatheredData
 							.get(base + 1), gatheredData.get(base + 2), Long
@@ -161,7 +212,6 @@ public enum NodeInfoGather
 							.parseLong(gatheredData.get(base + 11)), Long
 							.parseLong(gatheredData.get(base + 12)), Long
 							.parseLong(gatheredData.get(base + 13))));
-		}
 
 		return d;
 	}
@@ -172,10 +222,9 @@ public enum NodeInfoGather
 	 */
 	private Map<String, NetworkData> fillNetworkData(List<String> gatheredData)
 	{
-		Map<String, NetworkData> n = new HashMap<String, NetworkData>();
-		int offset = 17;
+		final Map<String, NetworkData> n = new HashMap<String, NetworkData>();
+		final int offset = 17;
 		for (int base = 0; base < gatheredData.size(); base += offset)
-		{
 			n.put(gatheredData.get(base),
 					new NetworkData(gatheredData.get(base), Long
 							.parseLong(gatheredData.get(base + 1)), Integer
@@ -194,7 +243,6 @@ public enum NodeInfoGather
 							.parseInt(gatheredData.get(base + 14)), Integer
 							.parseInt(gatheredData.get(base + 15)), Integer
 							.parseInt(gatheredData.get(base + 16))));
-		}
 		return n;
 	}
 }

@@ -31,16 +31,18 @@ public class HistoricalDatabase
 		try
 		{
 			Class.forName("org.sqlite.JDBC");
-			this.date = new DateTime();
-			this.conn = DriverManager.getConnection("jdbc:sqlite:" + file);
+			date = new DateTime();
+			conn = DriverManager.getConnection("jdbc:sqlite:" + file);
 
 			initDB();
-		} catch (SQLException ex)
+		} catch (final SQLException ex)
 		{
-			Logger.getLogger(HistoricalDatabase.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (ClassNotFoundException ex)
+			Logger.getLogger(HistoricalDatabase.class.getName()).log(
+					Level.SEVERE, null, ex);
+		} catch (final ClassNotFoundException ex)
 		{
-			Logger.getLogger(HistoricalDatabase.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(HistoricalDatabase.class.getName()).log(
+					Level.SEVERE, null, ex);
 		}
 	}
 
@@ -52,16 +54,15 @@ public class HistoricalDatabase
 	{
 		try
 		{
-			this.stm = this.conn.createStatement();
-			String[] create_tables = CREATE_TABLES.split(";");
-			for (String query : create_tables)
-			{
-				this.stm.executeUpdate(query);
-			}
+			stm = conn.createStatement();
+			final String[] create_tables = CREATE_TABLES.split(";");
+			for (final String query : create_tables)
+				stm.executeUpdate(query);
 
-		} catch (SQLException ex)
+		} catch (final SQLException ex)
 		{
-			Logger.getLogger(HistoricalDatabase.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(HistoricalDatabase.class.getName()).log(
+					Level.SEVERE, null, ex);
 		}
 	}
 
@@ -70,26 +71,68 @@ public class HistoricalDatabase
 	 */
 	public boolean saveOrUpdate(MonitoredData mData)
 	{
-		String timeID = this.getTimeLastRowID();
+		final String timeID = getTimeLastRowID();
 
 		// statements prepared and executed here
 		// Insere na tabela de nodos este cliente, usando como primary key o
 		// hashCode do IP address da máquina
-		saveOrUpdateToDatabase(INSERT_NODE.replace("?", String.valueOf(mData.getNodeID())));
+		saveOrUpdateToDatabase(INSERT_NODE.replace("?",
+				String.valueOf(mData.getNodeID())));
 
-		saveOrUpdateToDatabase(String.format(INSERT_MEMORY_USAGE, mData.getNodeID(), timeID, mData.getMem().getSize(), mData.getMem().getResident(), mData.getMem().getShare(), mData.getMem().getText(), mData.getMem().getData(), mData.getMem().getVsize(), mData.getMem().getRss(), mData.getMem().getRsslim(), mData.getMem().getMemTotal(), mData.getMem().getMemUsed(), mData.getMem().getMemFree(), mData.getMem().getMemBuffers(), mData.getMem().getMemCached()));
+		saveOrUpdateToDatabase(String.format(INSERT_MEMORY_USAGE, mData
+				.getNodeID(), timeID, mData.getMem().getSize(), mData.getMem()
+				.getResident(), mData.getMem().getShare(), mData.getMem()
+				.getText(), mData.getMem().getData(),
+				mData.getMem().getVsize(), mData.getMem().getRss(), mData
+						.getMem().getRsslim(), mData.getMem().getMemTotal(),
+				mData.getMem().getMemUsed(), mData.getMem().getMemFree(), mData
+						.getMem().getMemBuffers(), mData.getMem()
+						.getMemCached()));
 		for (int core = 0; core < mData.getCpu().keySet().size(); core++)
-		{
-			saveOrUpdateToDatabase(String.format(INSERT_CPU_USAGE, mData.getNodeID(), timeID, mData.getCpu().get(core).getCoreId(), mData.getCpu().get(core).getUser(), mData.getCpu().get(core).getNice(), mData.getCpu().get(core).getSysmode(), mData.getCpu().get(core).getIdle(), mData.getCpu().get(core).getIowait(), mData.getCpu().get(core).getIrq(), mData.getCpu().get(core).getSoftirq(), mData.getCpu().get(core).getSteal(), mData.getCpu().get(core).getGuest()));
-		}
-		for (String o : mData.getDisk().keySet())
-		{
-			saveOrUpdateToDatabase(String.format(INSERT_DISK_USAGE, mData.getNodeID(), timeID, mData.getDisk().get(o).getName(), mData.getDisk().get(o).getReadsCompleted(), mData.getDisk().get(o).getReadsMerged(), mData.getDisk().get(o).getWritesMerged(), mData.getDisk().get(o).getSectorsRead(), mData.getDisk().get(o).getMillisecondsReading(), mData.getDisk().get(o).getWritesCompleted(), mData.getDisk().get(o).getSectorsWritten(), mData.getDisk().get(o).getMillisecondsWriting(), mData.getDisk().get(o).getIosInProgress(), mData.getDisk().get(o).getMillisecondsSpentInIO(), mData.getDisk().get(o).getWeightedMillisecondsDoingIO()));
-		}
-		for (String o : mData.getNet().keySet())
-		{
-			saveOrUpdateToDatabase(String.format(INSERT_NETWORK_USAGE, mData.getNodeID(), timeID, mData.getNet().get(o).getInterfaceName(), mData.getNet().get(o).getReceive().getRX_Bytes(), mData.getNet().get(o).getReceive().getRX_Packets(), mData.getNet().get(o).getReceive().getRX_Erros(), mData.getNet().get(o).getReceive().getRX_Dropped(), mData.getNet().get(o).getReceive().getRX_Fifo(), mData.getNet().get(o).getReceive().getRX_Frame(), mData.getNet().get(o).getReceive().getRX_Compressed(), mData.getNet().get(o).getReceive().getRX_Multicast(), mData.getNet().get(o).getTransmit().getTX_Bytes(), mData.getNet().get(o).getTransmit().getTX_Packets(), mData.getNet().get(o).getTransmit().getTX_Erros(), mData.getNet().get(o).getTransmit().getTX_Dropped(), mData.getNet().get(o).getTransmit().getTX_Fifo(), mData.getNet().get(o).getTransmit().getTX_Collisions(), mData.getNet().get(o).getTransmit().getTX_CarrierErrors(), mData.getNet().get(o).getTransmit().getTX_Compressed()));
-		}
+			saveOrUpdateToDatabase(String.format(INSERT_CPU_USAGE,
+					mData.getNodeID(), timeID, mData.getCpu().get(core)
+							.getCoreId(), mData.getCpu().get(core).getUser(),
+					mData.getCpu().get(core).getNice(), mData.getCpu()
+							.get(core).getSysmode(), mData.getCpu().get(core)
+							.getIdle(), mData.getCpu().get(core).getIowait(),
+					mData.getCpu().get(core).getIrq(), mData.getCpu().get(core)
+							.getSoftirq(), mData.getCpu().get(core).getSteal(),
+					mData.getCpu().get(core).getGuest()));
+		for (final String o : mData.getDisk().keySet())
+			saveOrUpdateToDatabase(String.format(INSERT_DISK_USAGE,
+					mData.getNodeID(), timeID,
+					mData.getDisk().get(o).getName(), mData.getDisk().get(o)
+							.getReadsCompleted(), mData.getDisk().get(o)
+							.getReadsMerged(), mData.getDisk().get(o)
+							.getWritesMerged(), mData.getDisk().get(o)
+							.getSectorsRead(), mData.getDisk().get(o)
+							.getMillisecondsReading(), mData.getDisk().get(o)
+							.getWritesCompleted(), mData.getDisk().get(o)
+							.getSectorsWritten(), mData.getDisk().get(o)
+							.getMillisecondsWriting(), mData.getDisk().get(o)
+							.getIosInProgress(), mData.getDisk().get(o)
+							.getMillisecondsSpentInIO(), mData.getDisk().get(o)
+							.getWeightedMillisecondsDoingIO()));
+		for (final String o : mData.getNet().keySet())
+			saveOrUpdateToDatabase(String.format(INSERT_NETWORK_USAGE,
+					mData.getNodeID(), timeID, mData.getNet().get(o)
+							.getInterfaceName(), mData.getNet().get(o)
+							.getReceive().getRX_Bytes(), mData.getNet().get(o)
+							.getReceive().getRX_Packets(), mData.getNet()
+							.get(o).getReceive().getRX_Erros(), mData.getNet()
+							.get(o).getReceive().getRX_Dropped(), mData
+							.getNet().get(o).getReceive().getRX_Fifo(), mData
+							.getNet().get(o).getReceive().getRX_Frame(), mData
+							.getNet().get(o).getReceive().getRX_Compressed(),
+					mData.getNet().get(o).getReceive().getRX_Multicast(), mData
+							.getNet().get(o).getTransmit().getTX_Bytes(), mData
+							.getNet().get(o).getTransmit().getTX_Packets(),
+					mData.getNet().get(o).getTransmit().getTX_Erros(), mData
+							.getNet().get(o).getTransmit().getTX_Dropped(),
+					mData.getNet().get(o).getTransmit().getTX_Fifo(), mData
+							.getNet().get(o).getTransmit().getTX_Collisions(),
+					mData.getNet().get(o).getTransmit().getTX_CarrierErrors(),
+					mData.getNet().get(o).getTransmit().getTX_Compressed()));
 
 		return true;
 	}
@@ -105,12 +148,13 @@ public class HistoricalDatabase
 	{
 		try
 		{
-			this.stm = this.conn.createStatement();
-			this.stm.executeUpdate(insert);
+			stm = conn.createStatement();
+			stm.executeUpdate(insert);
 			return getLastInsertRowId();
-		} catch (SQLException ex)
+		} catch (final SQLException ex)
 		{
-			Logger.getLogger(HistoricalDatabase.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(HistoricalDatabase.class.getName()).log(
+					Level.SEVERE, null, ex);
 		}
 		return -1;
 	}
@@ -127,12 +171,11 @@ public class HistoricalDatabase
 		{
 			rs = stm.getGeneratedKeys();
 			while (rs.next())
-			{
 				rowID = rs.getInt(1);
-			}
-		} catch (SQLException ex)
+		} catch (final SQLException ex)
 		{
-			Logger.getLogger(HistoricalDatabase.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(HistoricalDatabase.class.getName()).log(
+					Level.SEVERE, null, ex);
 		}
 		return rowID;
 	}
@@ -142,7 +185,8 @@ public class HistoricalDatabase
 	 */
 	private String getTimeLastRowID()
 	{
-		return String.valueOf(saveOrUpdateToDatabase(String.format(INSERT_TIME, this.getTime())));
+		return String.valueOf(saveOrUpdateToDatabase(String.format(INSERT_TIME,
+				getTime())));
 	}
 
 	/**
@@ -151,7 +195,13 @@ public class HistoricalDatabase
 	 */
 	private String getTime()
 	{
-		return String.format("%d, %d, %d, %d, %d, %d, %d, %d, %d", this.date.getSecondOfMinute(), this.date.getMinuteOfHour(), this.date.getHourOfDay(), this.date.getDayOfMonth(), this.date.getMonthOfYear(), this.date.getYear(), this.date.getDayOfWeek(), this.date.getDayOfYear(), (TimeZone.getDefault().inDaylightTime(new Date()) == true ? 1 : 0));
+		return String
+				.format("%d, %d, %d, %d, %d, %d, %d, %d, %d", date
+						.getSecondOfMinute(), date.getMinuteOfHour(), date
+						.getHourOfDay(), date.getDayOfMonth(), date
+						.getMonthOfYear(), date.getYear(), date.getDayOfWeek(),
+						date.getDayOfYear(), (TimeZone.getDefault()
+								.inDaylightTime(new Date()) == true ? 1 : 0));
 	}
 
 	/**
