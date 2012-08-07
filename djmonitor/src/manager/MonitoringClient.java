@@ -12,9 +12,10 @@ import utils.Utils;
 public class MonitoringClient
 {
 
-	public MonitoringClient(long _gatherInterval, String _servAddress, int _servPort)
+	public MonitoringClient(long _gatherInterval, String _servAddress,
+			int _servPort, String _sensorAddress)
 	{
-		new Gather(this, _gatherInterval);
+		new Gather(this, _gatherInterval, _sensorAddress);
 		new Sender(this, _servAddress, _servPort);
 	}
 
@@ -62,13 +63,15 @@ class Gather implements Runnable
 {
 
 	MonitoringClient client;
+	String sensorAddress = null;
 	long gatherInterval = 0;
 	int uuid = 0;
 
-	Gather(MonitoringClient client, long _gatherInterval)
+	Gather(MonitoringClient client, long _gatherInterval, String _sensorAddress)
 	{
 		this.client = client;
 		this.gatherInterval = _gatherInterval;
+		this.sensorAddress = _sensorAddress;
 		this.uuid = Utils.getNodeUUID();
 		new Thread(this, "Gather").start();
 	}
@@ -84,10 +87,12 @@ class Gather implements Runnable
 				Thread.sleep(this.gatherInterval);
 			} catch (InterruptedException ex)
 			{
-				Logger.getLogger(MonitoringClient.class.getName()).log(Level.SEVERE, null, ex);
+				Logger.getLogger(MonitoringClient.class.getName()).log(
+						Level.SEVERE, null, ex);
 			}
-			tempData = NodeInfoGather.INSTANCE.getSystemUsage(this.uuid);
-			System.out.println("Finished gathering data from procfs. Ready to send it.");
+			tempData = NodeInfoGather.INSTANCE.getSystemUsage(this.uuid, this.sensorAddress);
+			System.out
+					.println("Finished gathering data from procfs. Ready to send it.");
 			client.put(tempData);
 		}
 	}
@@ -113,11 +118,14 @@ class Sender implements Runnable
 	{
 		// check for parameters
 		if (_client == null)
-			throw new IllegalArgumentException("Parameter: <Client object> null.");
+			throw new IllegalArgumentException(
+					"Parameter: <Client object> null.");
 		if (!Utils.stringNotEmpty(_server))
-			throw new IllegalArgumentException("Parameter: <Server Address> empty.");
+			throw new IllegalArgumentException(
+					"Parameter: <Server Address> empty.");
 		if (_servPort <= 0)
-			throw new IllegalArgumentException("Parameter: <Server Port> empty.");
+			throw new IllegalArgumentException(
+					"Parameter: <Server Port> empty.");
 
 		this.client = _client;
 		this.server = _server;
@@ -130,10 +138,12 @@ class Sender implements Runnable
 			System.out.println("Connected to server...");
 		} catch (UnknownHostException e)
 		{
-			Logger.getLogger(MonitoringClient.class.getName()).log(Level.SEVERE, null, e);
+			Logger.getLogger(MonitoringClient.class.getName()).log(
+					Level.SEVERE, null, e);
 		} catch (IOException e)
 		{
-			Logger.getLogger(MonitoringClient.class.getName()).log(Level.SEVERE, null, e);
+			Logger.getLogger(MonitoringClient.class.getName()).log(
+					Level.SEVERE, null, e);
 		}
 
 		new Thread(this, "Sender").start();
@@ -147,7 +157,8 @@ class Sender implements Runnable
 		while (true)
 		{
 			if ((tempData = client.get()) == null)
-				throw new IllegalArgumentException("Parameter: <Monitored Data> empty.");
+				throw new IllegalArgumentException(
+						"Parameter: <Monitored Data> empty.");
 
 			// printMonitoredData(tempData);
 			System.out.println("Data gathered. Sending...");
@@ -158,10 +169,13 @@ class Sender implements Runnable
 				oos.flush();
 			} catch (IOException e)
 			{
-				Logger.getLogger(MonitoringClient.class.getName()).log(Level.SEVERE, null, e);
+				Logger.getLogger(MonitoringClient.class.getName()).log(
+						Level.SEVERE, null, e);
 			}
 			this.packageCount++;
-			System.out.println("Client sent the monitored data package: " + String.valueOf(this.packageCount));
+			System.out
+					.println("Client sent the monitored data package: " + String
+							.valueOf(this.packageCount));
 		}
 	}
 

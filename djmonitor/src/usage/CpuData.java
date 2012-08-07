@@ -26,7 +26,8 @@ public class CpuData implements Serializable
 	 * @param sysmode
 	 * @param user
 	 */
-	public CpuData(int coreId, long user, long nice, long sysmode, long idle, long iowait, long irq, int softirq, long steal, long guest)
+	public CpuData(int coreId, long user, long nice, long sysmode, long idle,
+			long iowait, long irq, int softirq, long steal, long guest)
 	{
 		this.coreId = coreId;
 		this.user = user;
@@ -41,15 +42,13 @@ public class CpuData implements Serializable
 	}
 
 	@Override
-	/**
-	 * CORE_ID, USER, NICE, SYSMODE, IDLE, IOWAIT, IRQ, SOFTIRQ, STEAL, GUEST.
-	 */
 	public String toString()
 	{
-		return String.valueOf(this.coreId + ", ") + String.valueOf(this.user + ", ") + String.valueOf(this.nice + ", ") + String.valueOf(this.sysmode + ", ") + String.valueOf(this.idle + ", ") + String.valueOf(this.iowait + ", ") + String.valueOf(this.irq + ", ") + String.valueOf(this.softirq + ", ") + String.valueOf(this.steal + ", ") + String.valueOf(this.guest);
+		return "CpuData [load=" + load + ", coreId=" + coreId + ", guest=" + guest + ", idle=" + idle + ", iowait=" + iowait + ", irq=" + irq + ", nice=" + nice + ", softirq=" + softirq + ", steal=" + steal + ", sysmode=" + sysmode + ", user=" + user + "]";
 	}
+
 	/**
-	 * Get the sum of all CPU times.  
+	 * Get the sum of all CPU times.
 	 */
 	public long getTotalTimes()
 	{

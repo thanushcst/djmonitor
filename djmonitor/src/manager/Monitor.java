@@ -19,11 +19,14 @@ public class Monitor
 
 	public static void main(String[] args) throws IOException
 	{
-		if (args.length < 1 || args.length > 3)
+		if (args.length < 1 || args.length > 4)
 		{
 			System.out.println("Use:");
 			System.out.println("monitor -m <PORT> para rodar MonitoringMaster");
-			System.out.println("monitor -c <PORT> <SERVER_ADDRESS> para rodar MonitoringClient");
+			System.out
+					.println("monitor -c <PORT> <SERVER_ADDRESS> para rodar MonitoringClient sem sensor");
+			System.out
+					.println("monitor -c <PORT> <SERVER_ADDRESS> <SENSOR_ADDRESS> para rodar MonitoringClient com sensor");
 		} else
 		{
 			if (args[0].equals("-m"))
@@ -31,10 +34,23 @@ public class Monitor
 				startMonitoringMasterService(getServerPortFromArgs(args[1]));
 			} else if (args[0].equals("-c"))
 			{
-				startMonitoringClientService(getServerAddressFromArgs(args[2]), getServerPortFromArgs(args[1]));
+				startMonitoringClientService(getServerAddressFromArgs(args[2]),
+						getServerPortFromArgs(args[1]),
+						getSensorAddressFromArgs(args[3]));
 			}
 			System.out.println("Press Control-C to stop.");
 		}
+	}
+
+	private static String getSensorAddressFromArgs(String _sensorAddress)
+	{
+		if (!Utils.stringNotEmpty(_sensorAddress))
+		{
+			System.out
+					.println("No sensor address received. Monitoring only system usage...");
+			return null;
+		} else
+			return _sensorAddress;
 	}
 
 	/**
@@ -49,7 +65,8 @@ public class Monitor
 		// String ipmask = "\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b";
 
 		if (!Utils.stringNotEmpty(argAddress))// || !ipmask.matches(argAddress))
-			throw new IllegalArgumentException("Parameter: <Server Address> empty or wrong format.");
+			throw new IllegalArgumentException(
+					"Parameter: <Server Address> empty or wrong format.");
 		else
 			return argAddress;
 	}
@@ -63,7 +80,8 @@ public class Monitor
 	private static int getServerPortFromArgs(String argPort) throws IllegalArgumentException, NumberFormatException
 	{
 		if (!Utils.stringNotEmpty(argPort))
-			throw new IllegalArgumentException("Parameter: <Server Port> empty.");
+			throw new IllegalArgumentException(
+					"Parameter: <Server Port> empty.");
 		else
 			return Integer.valueOf(argPort);
 	}
@@ -76,9 +94,10 @@ public class Monitor
 	 * @throws IllegalArgumentException
 	 * @throws NumberFormatException
 	 */
-	private static void startMonitoringClientService(String _serverAddress, int _serverPort) throws IllegalArgumentException, NumberFormatException
+	private static void startMonitoringClientService(String _serverAddress, int _serverPort, String _sensorAddress) throws IllegalArgumentException, NumberFormatException
 	{
-		new MonitoringClient(GATHER_INTERVAL, _serverAddress, _serverPort);
+		new MonitoringClient(GATHER_INTERVAL, _serverAddress, _serverPort,
+				_sensorAddress);
 	}
 
 	/**
@@ -103,11 +122,15 @@ public class Monitor
 		// Run forever, accepting and spawning a thread for each connection
 		while (true)
 		{
-			System.out.println(String.format("Waiting for connections. Right now %d clients connected. ", totalClientsConnected));
+			System.out
+					.println(String
+							.format("Waiting for connections. Right now %d clients connected. ",
+									totalClientsConnected));
 			// Block waiting for connection
 			Socket clntSock = servSock.accept();
 			totalClientsConnected++;
-			Thread thread = new Thread(new MonitoringMaster(GATHER_INTERVAL, clntSock, hdb));
+			Thread thread = new Thread(new MonitoringMaster(GATHER_INTERVAL,
+					clntSock, hdb));
 			thread.start();
 			logger.info("Created and started Thread " + thread.getName());
 		}

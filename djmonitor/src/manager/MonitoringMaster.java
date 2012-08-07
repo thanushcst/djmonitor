@@ -49,7 +49,7 @@ public class MonitoringMaster implements Runnable
 				System.out.println("Got received data. Ready to save.");
 				this.hdb.saveOrUpdate(mdata);
 				System.out.println("Monitored Data arrived at home from node: " + String.valueOf(mdata.getNodeID()));
-				data.analyze(mdata, 10);
+				//data.analyze(mdata, 10);
 			}
 
 		} catch (IOException ex)
