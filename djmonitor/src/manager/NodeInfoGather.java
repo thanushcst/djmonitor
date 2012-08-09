@@ -1,6 +1,7 @@
 package manager;
 
 import java.io.IOException;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,11 +68,7 @@ public class NodeInfoGather
 
 		System.out.println("IP Address of the client: " + String.valueOf(uuid));
 
-		return new MonitoredData(uuid,
-				fillCpuData(pp.gatherUsage(UsageType.CPU)),
-				fillMemData(pp.gatherUsage(UsageType.MEMORY)),
-				fillDiskData(pp.gatherUsage(UsageType.DISK)),
-				fillNetworkData(pp.gatherUsage(UsageType.NETWORK)), sData);
+		return new MonitoredData(uuid, fillCpuData(pp.gatherUsage(UsageType.CPU)), fillMemData(pp.gatherUsage(UsageType.MEMORY)), fillDiskData(pp.gatherUsage(UsageType.DISK)), fillNetworkData(pp.gatherUsage(UsageType.NETWORK)), sData);
 	}
 
 	/**
@@ -85,56 +82,51 @@ public class NodeInfoGather
 	{
 		try
 		{
-			return fillSensorData(sp.gatherSensor(channels));
+			return fillSensorData(_sensorAddress, sp.gatherSensor(channels));
 		} catch (final IOException e)
 		{
-			Logger.getLogger(NodeInfoGather.class.getName()).log(Level.SEVERE,
-					null, e);
+			Logger.getLogger(NodeInfoGather.class.getName()).log(Level.SEVERE, null, e);
 		}
 		return null;
 	}
 
 	/**
-	 * Create a sensor data object, with the informatation polled from the
-	 * sensor
+	 * Create a sensor data object, with the information polled from the sensor
+	 * @param _sensorAddress 
 	 */
-	private SensorData fillSensorData(ArrayList<String> gatheredData)
+	private SensorData fillSensorData(String _sensorAddress, ArrayList<String> gatheredData)
 	{
 		final DateTime dateComplete = new DateTime();
-		final Map<UnityType, String> values = new HashMap<UnityType, String>();
+		final List<SimpleEntry<UnityType, Double>> values = new ArrayList<SimpleEntry<UnityType, Double>>();
 
 		for (final String s : gatheredData)
 			if (s.contains("N"))
 			{
 				// E.g. N 001 ^C +00219E-01
-				final String[] tempValues = Utils.removeEmptyStringsFromArray(s
-						.split(Symbols.SPACE));
+				final String[] tempValues = Utils.removeEmptyStringsFromArray(s.split(Symbols.SPACE));
 
-				//Trata o canal 4 diferente porque ele não tem unidade (pelo menos até o momento)
-				if (!tempValues[1].equals("004"))
-					values.put(Utils.convertStringToUnity(tempValues[2]),
-							tempValues[3]);
+				if (tempValues.length == 4)
+					values.add(new SimpleEntry<UnityType, Double>(Utils.convertStringToUnity(tempValues[2]), Double.parseDouble(tempValues[3])));
 				else
-					values.put(UnityType.NULL, tempValues[2]);
+					values.add(new SimpleEntry<UnityType, Double>(UnityType.NULL, Double.parseDouble(tempValues[2])));
+
 			} else if (s.contains("DATE"))
 			{
 				// E.g. DATE 12/08/07 (YY-MM-DD)
-				final String[] date = s.split(Symbols.SPACE)[1]
-						.split(Symbols.SLASH);
+				final String[] date = s.split(Symbols.SPACE)[1].split(Symbols.SLASH);
 				dateComplete.plusYears(Integer.parseInt(date[0]) + 2000);
 				dateComplete.plusMonths(Integer.parseInt(date[1]));
 				dateComplete.plusDays(Integer.parseInt(date[2]));
 			} else if (s.contains("TIME"))
 			{
 				// E.g. TIME 17:27:38
-				final String[] time = s.split(Symbols.SPACE)[1]
-						.split(Symbols.COLON);
+				final String[] time = s.split(Symbols.SPACE)[1].split(Symbols.COLON);
 				dateComplete.plusHours(Integer.parseInt(time[0]));
 				dateComplete.plusMinutes(Integer.parseInt(time[1]));
 				dateComplete.plusSeconds(Integer.parseInt(time[2]));
 			}
 
-		return new SensorData(dateComplete, values);
+		return new SensorData(_sensorAddress, dateComplete, values);
 	}
 
 	/**
@@ -146,17 +138,7 @@ public class NodeInfoGather
 		final Map<Integer, CpuData> c = new HashMap<Integer, CpuData>();
 		final int offset = 10;
 		for (int base = 0; base < gatheredData.size(); base += offset)
-			c.put(Integer.parseInt(gatheredData.get(base)),
-					new CpuData(Integer.parseInt(gatheredData.get(base)),
-							Integer.parseInt(gatheredData.get(base + 1)), Long
-									.parseLong(gatheredData.get(base + 2)),
-							Long.parseLong(gatheredData.get(base + 3)), Long
-									.parseLong(gatheredData.get(base + 4)),
-							Long.parseLong(gatheredData.get(base + 5)), Long
-									.parseLong(gatheredData.get(base + 6)),
-							Integer.parseInt(gatheredData.get(base + 7)), Long
-									.parseLong(gatheredData.get(base + 8)),
-							Long.parseLong(gatheredData.get(base + 9))));
+			c.put(Integer.parseInt(gatheredData.get(base)), new CpuData(Integer.parseInt(gatheredData.get(base)), Integer.parseInt(gatheredData.get(base + 1)), Long.parseLong(gatheredData.get(base + 2)), Long.parseLong(gatheredData.get(base + 3)), Long.parseLong(gatheredData.get(base + 4)), Long.parseLong(gatheredData.get(base + 5)), Long.parseLong(gatheredData.get(base + 6)), Integer.parseInt(gatheredData.get(base + 7)), Long.parseLong(gatheredData.get(base + 8)), Long.parseLong(gatheredData.get(base + 9))));
 		return c;
 	}
 
@@ -166,24 +148,13 @@ public class NodeInfoGather
 	 */
 	private MemData fillMemData(List<String> gatheredData)
 	{
-		final MemData m = new MemData(
-				Integer.parseInt(gatheredData.get(0)),
-				Integer.parseInt(gatheredData.get(1)),
-				Integer.parseInt(gatheredData.get(2)),
-				Integer.parseInt(gatheredData.get(3)),
-				// Integer.parseInt(gatheredData.get(4)), not used
-				Integer.parseInt(gatheredData.get(5)),
-				// Integer.parseInt(gatheredData.get(6)), not used
-				gatheredData.get(7),
-				Integer.parseInt(gatheredData.get(8)),
-				gatheredData.get(9),
-				Integer.parseInt(gatheredData.get(10)),
-				// used memory = total memory - free memory
-				(Integer.parseInt(gatheredData.get(10)) - Integer
-						.parseInt(gatheredData.get(11))),
-				Integer.parseInt(gatheredData.get(11)),
-				Integer.parseInt(gatheredData.get(12)),
-				Integer.parseInt(gatheredData.get(13)));
+		final MemData m = new MemData(Integer.parseInt(gatheredData.get(0)), Integer.parseInt(gatheredData.get(1)), Integer.parseInt(gatheredData.get(2)), Integer.parseInt(gatheredData.get(3)),
+		// Integer.parseInt(gatheredData.get(4)), not used
+		Integer.parseInt(gatheredData.get(5)),
+		// Integer.parseInt(gatheredData.get(6)), not used
+		gatheredData.get(7), Integer.parseInt(gatheredData.get(8)), gatheredData.get(9), Integer.parseInt(gatheredData.get(10)),
+		// used memory = total memory - free memory
+		(Integer.parseInt(gatheredData.get(10)) - Integer.parseInt(gatheredData.get(11))), Integer.parseInt(gatheredData.get(11)), Integer.parseInt(gatheredData.get(12)), Integer.parseInt(gatheredData.get(13)));
 		return m;
 	}
 
@@ -193,26 +164,10 @@ public class NodeInfoGather
 	 */
 	private Map<String, DiskData> fillDiskData(List<String> gatheredData)
 	{
-
 		final Map<String, DiskData> d = new HashMap<String, DiskData>();
 		final int offset = 14;
-
 		for (int base = 0; base < gatheredData.size(); base += offset)
-			d.put(gatheredData.get(base + 2),
-					new DiskData(gatheredData.get(base), gatheredData
-							.get(base + 1), gatheredData.get(base + 2), Long
-							.parseLong(gatheredData.get(base + 3)), Long
-							.parseLong(gatheredData.get(base + 4)), Long
-							.parseLong(gatheredData.get(base + 5)), Long
-							.parseLong(gatheredData.get(base + 6)), Long
-							.parseLong(gatheredData.get(base + 7)), Long
-							.parseLong(gatheredData.get(base + 8)), Long
-							.parseLong(gatheredData.get(base + 9)), Long
-							.parseLong(gatheredData.get(base + 10)), Long
-							.parseLong(gatheredData.get(base + 11)), Long
-							.parseLong(gatheredData.get(base + 12)), Long
-							.parseLong(gatheredData.get(base + 13))));
-
+			d.put(gatheredData.get(base + 2), new DiskData(gatheredData.get(base), gatheredData.get(base + 1), gatheredData.get(base + 2), Long.parseLong(gatheredData.get(base + 3)), Long.parseLong(gatheredData.get(base + 4)), Long.parseLong(gatheredData.get(base + 5)), Long.parseLong(gatheredData.get(base + 6)), Long.parseLong(gatheredData.get(base + 7)), Long.parseLong(gatheredData.get(base + 8)), Long.parseLong(gatheredData.get(base + 9)), Long.parseLong(gatheredData.get(base + 10)), Long.parseLong(gatheredData.get(base + 11)), Long.parseLong(gatheredData.get(base + 12)), Long.parseLong(gatheredData.get(base + 13))));
 		return d;
 	}
 
@@ -225,24 +180,7 @@ public class NodeInfoGather
 		final Map<String, NetworkData> n = new HashMap<String, NetworkData>();
 		final int offset = 17;
 		for (int base = 0; base < gatheredData.size(); base += offset)
-			n.put(gatheredData.get(base),
-					new NetworkData(gatheredData.get(base), Long
-							.parseLong(gatheredData.get(base + 1)), Integer
-							.parseInt(gatheredData.get(base + 2)), Integer
-							.parseInt(gatheredData.get(base + 3)), Integer
-							.parseInt(gatheredData.get(base + 4)), Integer
-							.parseInt(gatheredData.get(base + 5)), Integer
-							.parseInt(gatheredData.get(base + 6)), Integer
-							.parseInt(gatheredData.get(base + 7)), Integer
-							.parseInt(gatheredData.get(base + 8)), Long
-							.parseLong(gatheredData.get(base + 9)), Integer
-							.parseInt(gatheredData.get(base + 10)), Integer
-							.parseInt(gatheredData.get(base + 11)), Integer
-							.parseInt(gatheredData.get(base + 12)), Integer
-							.parseInt(gatheredData.get(base + 13)), Integer
-							.parseInt(gatheredData.get(base + 14)), Integer
-							.parseInt(gatheredData.get(base + 15)), Integer
-							.parseInt(gatheredData.get(base + 16))));
+			n.put(gatheredData.get(base), new NetworkData(gatheredData.get(base), Long.parseLong(gatheredData.get(base + 1)), Integer.parseInt(gatheredData.get(base + 2)), Integer.parseInt(gatheredData.get(base + 3)), Integer.parseInt(gatheredData.get(base + 4)), Integer.parseInt(gatheredData.get(base + 5)), Integer.parseInt(gatheredData.get(base + 6)), Integer.parseInt(gatheredData.get(base + 7)), Integer.parseInt(gatheredData.get(base + 8)), Long.parseLong(gatheredData.get(base + 9)), Integer.parseInt(gatheredData.get(base + 10)), Integer.parseInt(gatheredData.get(base + 11)), Integer.parseInt(gatheredData.get(base + 12)), Integer.parseInt(gatheredData.get(base + 13)), Integer.parseInt(gatheredData.get(base + 14)), Integer.parseInt(gatheredData.get(base + 15)), Integer.parseInt(gatheredData.get(base + 16))));
 		return n;
 	}
 }
